@@ -1,0 +1,18 @@
+{
+  "name": "cwitter",
+  "version": "1.0.0",
+  "description": "Copy twitter backend routing and controller",
+  "keywords": [
+    "Backend",
+    "Learning",
+    "Logic",
+    "Building"
+  ],
+  "license": "ISC",
+  "author": "Aparneet Dey",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
