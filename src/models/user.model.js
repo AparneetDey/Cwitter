@@ -39,7 +39,10 @@ const userSchema = new Schema(
                 type: Schema.Types.ObjectId,
                 ref: "Tweet"
             }
-        ]
+        ],
+        refreshToken: {
+            type: String
+        }
     },
     {
         timestamps: true
