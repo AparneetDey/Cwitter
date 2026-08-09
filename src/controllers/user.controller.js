@@ -60,6 +60,50 @@ const registerUser = asyncHandler(async (req, res) => {
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
     res
+    .status(201)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
+    .json(
+        new ApiResponse(
+            201,
+            {
+                user: loggedInUser,
+                accessToken
+            },
+            "User registered successfully"
+        )
+    )
+})
+
+const loginUser = asyncHandler(async (req, res) => {
+    const {identity, password} = req.body;
+
+    if([identity, password].some((field) => field?.trim() === "" || !field)) {
+        throw new ApiError(400, "All fields are required");
+    }
+
+    let username = "";
+    let email = "";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if(emailRegex.test(identity)) {
+        email = identity;
+    } else {
+        username = identity.toLowerCase();
+    }
+
+    const existedUser = await User.findOne({
+        $or: [{username}, {email}]
+    });
+
+    if(!existedUser) throw new ApiError(404, "User does not exist");
+
+    if(!existedUser.isPasswordCorrect(password)) throw new ApiError(401, "Incorrect password");
+
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(existedUser._id);
+
+    const loggedInUser = await User.findById(existedUser._id).select("-password -refreshToken");
+
+    res
     .status(200)
     .cookie("accessToken", accessToken, cookieOptions)
     .cookie("refreshToken", refreshToken, cookieOptions)
@@ -70,7 +114,7 @@ const registerUser = asyncHandler(async (req, res) => {
                 user: loggedInUser,
                 accessToken
             },
-            "User registered successfully"
+            "User logged in successfully"
         )
     )
 })
@@ -89,5 +133,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 export {
     registerUser,
-    getCurrentUser
+    loginUser,
+    getCurrentUser,
 }
