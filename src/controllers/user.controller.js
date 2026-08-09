@@ -75,7 +75,7 @@ const registerUser = asyncHandler(async (req, res) => {
     )
 })
 
-const loginUser = asyncHandler(async (req, res) => {
+const logInUser = asyncHandler(async (req, res) => {
     const {identity, password} = req.body;
 
     if([identity, password].some((field) => field?.trim() === "" || !field)) {
@@ -119,6 +119,28 @@ const loginUser = asyncHandler(async (req, res) => {
     )
 })
 
+const logoutUser = asyncHandler(async (req, res) => {
+    await User.findByIdAndUpdate(req?.user?._id, {
+        $set: {
+            accessToken: ""
+        }
+    }, {
+        new: true
+    })
+
+    res
+    .status(200)
+    .clearCookie("accessToken", cookieOptions)
+    .clearCookie("refreshToken", cookieOptions)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "User log out successfully"
+        )
+    )
+})
+
 const getCurrentUser = asyncHandler(async (req, res) => {
     res
     .status(200)
@@ -133,6 +155,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
 export {
     registerUser,
-    loginUser,
+    logInUser,
+    logoutUser,
     getCurrentUser,
 }
