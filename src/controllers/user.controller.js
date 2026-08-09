@@ -12,42 +12,37 @@ const cookieOptions = {
 
 const generateAccessAndRefreshToken = async (userId) => {
     try {
-        const user = User.findById(userId);
+        const user = await User.findById(userId);
 
-        const accessToken = user.generateAccessToken();
-        const refreshToken = user.generateRefreshToken();
+        const accessToken = await user.generateAccessToken();
+        const refreshToken = await user.generateRefreshToken();
 
         user.refreshToken = refreshToken;
         await user.save({validateBeforeSave: false});
 
         return {accessToken, refreshToken};
     } catch (error) {
+        console.log(error);
         throw new ApiError(500, "Something went wrong while generating tokens");
     }
 }
 
 
 const registerUser = asyncHandler(async (req, res) => {
-    console.log("register");
     
     const {username, email, fullName, password} = req.body;
-    console.log(req.body);
 
     if(
         [username, email, fullName, password].some((field) => field?.trim() === "" || !field)
     ) {
         throw new ApiError(400, "All fields are required");
     }
-    console.log("2");
 
     const existedUser = await User.findOne({
         $or: [{username}, {email}]
     })
 
-    console.log("2.5");
-    console.log(existedUser)
     if(existedUser) throw new ApiError(409, "User already exists");
-    console.log("3");
 
     const user = await User.create({
         username: username.toLowerCase(),
@@ -59,14 +54,10 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: "",
         refreshToken: ""
     })
-    console.log("3");
-
 
     const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id);
 
     const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
-
-    console.log("4");
 
     res
     .status(200)
