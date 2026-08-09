@@ -28,22 +28,29 @@ const generateAccessAndRefreshToken = async (userId) => {
 
 
 const registerUser = asyncHandler(async (req, res) => {
+    console.log("register");
+    
     const {username, email, fullName, password} = req.body;
+    console.log(req.body);
 
     if(
-        [username, email, fullName, password].some((field) => field.trim() == "")
+        [username, email, fullName, password].some((field) => field?.trim() === "" || !field)
     ) {
         throw new ApiError(400, "All fields are required");
     }
+    console.log("2");
 
     const existedUser = await User.findOne({
         $or: [{username}, {email}]
     })
 
+    console.log("2.5");
+    console.log(existedUser)
     if(existedUser) throw new ApiError(409, "User already exists");
+    console.log("3");
 
     const user = await User.create({
-        username: username.lower(),
+        username: username.toLowerCase(),
         email,
         fullName,
         password,
@@ -52,15 +59,19 @@ const registerUser = asyncHandler(async (req, res) => {
         coverImage: "",
         refreshToken: ""
     })
+    console.log("3");
 
-    const {accessToken, refreshToken} = generateAccessAndRefreshToken(user._id);
 
-    const loggedInUser = User.findById(user._id).select("-password -refreshToken");
+    const {accessToken, refreshToken} = await generateAccessAndRefreshToken(user._id);
+
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+    console.log("4");
 
     res
     .status(200)
-    .cookies("accessToken", accessToken, cookieOptions)
-    .cookies("refreshToken", refreshToken, cookieOptions)
+    .cookie("accessToken", accessToken, cookieOptions)
+    .cookie("refreshToken", refreshToken, cookieOptions)
     .json(
         new ApiResponse(
             200,
@@ -73,6 +84,19 @@ const registerUser = asyncHandler(async (req, res) => {
     )
 })
 
+const getCurrentUser = asyncHandler(async (req, res) => {
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Fetched Current User"
+        )
+    )
+})
+
 export {
-    registerUser
+    registerUser,
+    getCurrentUser
 }
