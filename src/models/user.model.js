@@ -34,7 +34,7 @@ const userSchema = new Schema(
         coverImage: {
             type: String //Url from coverImage
         },
-        bookMarks: [
+        bookmarks: [
             {
                 type: Schema.Types.ObjectId,
                 ref: "Tweet"

@@ -50,7 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
         email,
         fullName,
         password,
-        bookMarks: [],
+        bookmarks: [],
         avatar: "",
         coverImage: "",
         refreshToken: ""
@@ -122,7 +122,7 @@ const logInUser = asyncHandler(async (req, res) => {
     )
 })
 
-const logoutUser = asyncHandler(async (req, res) => {
+const logOutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req?.user?._id, {
         $set: {
             accessToken: ""
@@ -186,13 +186,18 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
+    const user = await User.findById(req?.user?._id).select("-password -refreshToken -bookmarks");
+
+    if(!user) throw new ApiError(404, "User not found");
+
+
     res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            {},
-            "Fetched Current User"
+            user,
+            "Fetched current user successfully"
         )
     )
 })
@@ -200,7 +205,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 export {
     registerUser,
     logInUser,
-    logoutUser,
+    logOutUser,
     refreshAccessToken,
     getCurrentUser,
 }
