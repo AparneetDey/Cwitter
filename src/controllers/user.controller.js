@@ -205,7 +205,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateUserAvatar = asyncHandler(async (req, res) => {
     const {avatarUrl} = req.body;
 
-    if(!avatarUrl || !avatarUrl.trim()) throw new ApiError(400, "Avatar url is required");
+    if(!avatarUrl || !avatarUrl.trim() === "") throw new ApiError(400, "Avatar url is required");
 
     const user = await User.findByIdAndUpdate(req?.user?._id, {
         $set: {
@@ -229,10 +229,9 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 })
 
 const updateUserCoverImage = asyncHandler(async (req, res) => {
-    console.log("cover")
     const {coverImageUrl} = req.body;
 
-    if(!coverImageUrl || !coverImageUrl.trim()) throw new ApiError(400, "Coverimage url is required");
+    if(!coverImageUrl || !coverImageUrl.trim() === "") throw new ApiError(400, "Coverimage url is required");
 
     const user = await User.findByIdAndUpdate(req?.user?._id, {
         $set: {
@@ -255,6 +254,30 @@ const updateUserCoverImage = asyncHandler(async (req, res) => {
     )
 })
 
+const changeUserPassword = asyncHandler(async (req, res) => {
+    const {oldPassword, newPassword} = req.body;
+
+    if([oldPassword, newPassword].some((field) => field?.trim() === "" || !field)) throw new ApiError(400, "All fields are required");
+
+    const user = await User.findById(req?.user?._id);
+
+    const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
+    if(!isPasswordCorrect) throw new ApiError(401, "Unauthorized Request");
+
+    user.password = newPassword;
+    await user.save({validateBeforeSave: true});
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Password changed successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     logInUser,
@@ -262,5 +285,6 @@ export {
     refreshAccessToken,
     getCurrentUser,
     updateUserAvatar,
-    updateUserCoverImage
+    updateUserCoverImage,
+    changeUserPassword
 }
