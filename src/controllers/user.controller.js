@@ -228,11 +228,39 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     )
 })
 
+const updateUserCoverImage = asyncHandler(async (req, res) => {
+    console.log("cover")
+    const {coverImageUrl} = req.body;
+
+    if(!coverImageUrl || !coverImageUrl.trim()) throw new ApiError(400, "Coverimage url is required");
+
+    const user = await User.findByIdAndUpdate(req?.user?._id, {
+        $set: {
+            coverImage: coverImageUrl
+        }
+    }, {
+        new: true
+    })
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                coverImage: user.coverImage
+            },
+            "coverImage updated successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     logInUser,
     logOutUser,
     refreshAccessToken,
     getCurrentUser,
-    updateUserAvatar
+    updateUserAvatar,
+    updateUserCoverImage
 }

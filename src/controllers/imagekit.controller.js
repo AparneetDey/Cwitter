@@ -6,7 +6,6 @@ const imagekit = new ImageKit({
 });
 
 const getImageKitAuth = (req, res) => {
-    console.log("imagekit")
     const authenticationParameters = imagekit.helper.getAuthenticationParameters();
 
     res
