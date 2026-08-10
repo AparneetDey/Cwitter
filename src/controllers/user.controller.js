@@ -202,10 +202,37 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     )
 })
 
+const updateUserAvatar = asyncHandler(async (req, res) => {
+    const {avatarUrl} = req.body;
+
+    if(!avatarUrl || !avatarUrl.trim()) throw new ApiError(400, "Avatar url is required");
+
+    const user = await User.findByIdAndUpdate(req?.user?._id, {
+        $set: {
+            avatar: avatarUrl
+        }
+    }, {
+        new: true
+    })
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                avatar: user.avatar
+            },
+            "Avatar updated successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     logInUser,
     logOutUser,
     refreshAccessToken,
     getCurrentUser,
+    updateUserAvatar
 }
