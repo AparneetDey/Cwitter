@@ -9,7 +9,8 @@ const userSchema = new Schema(
             required: true,
             unique: true,
             index: true,
-            trim: true
+            trim: true,
+            lowercase: true
         },
         email: {
             type: String,
@@ -29,10 +30,10 @@ const userSchema = new Schema(
             required: true
         },
         avatar: {
-            type: String //Url from cloudinary
+            type: String //Url from imageKit
         },
         coverImage: {
-            type: String //Url from coverImage
+            type: String //Url from imageKit
         },
         bookmarks: [
             {
