@@ -4,7 +4,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { User } from "../models/user.model.js";
 
 const verifyToken = asyncHandler(async (req, res, next) => {
-    
     if((!req?.cookies || !req?.cookies?.accessToken) && !req.header("Authorization")) throw new ApiError(401, "Unauthorized Request");
 
     try {

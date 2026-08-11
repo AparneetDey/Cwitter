@@ -125,7 +125,7 @@ const logInUser = asyncHandler(async (req, res) => {
 const logOutUser = asyncHandler(async (req, res) => {
     await User.findByIdAndUpdate(req?.user?._id, {
         $set: {
-            accessToken: ""
+            refreshToken: ""
         }
     }, {
         new: true
@@ -145,7 +145,7 @@ const logOutUser = asyncHandler(async (req, res) => {
 })
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req?.cookies?.refreshToken || "";
+    const incomingRefreshToken = req?.cookies?.refreshToken || req?.body?.refreshToken || "";
 
     if(!incomingRefreshToken) throw new ApiError(401, "Unauthorized Request");
 
@@ -190,7 +190,6 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 
     if(!user) throw new ApiError(404, "User not found");
 
-
     res
     .status(200)
     .json(
@@ -205,7 +204,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 const updateUserAvatar = asyncHandler(async (req, res) => {
     const {avatarUrl} = req.body;
 
-    if(!avatarUrl || !avatarUrl.trim() === "") throw new ApiError(400, "Avatar url is required");
+    if(!avatarUrl || avatarUrl.trim() === "") throw new ApiError(400, "Avatar url is required");
 
     const user = await User.findByIdAndUpdate(req?.user?._id, {
         $set: {
@@ -231,7 +230,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 const updateUserCoverImage = asyncHandler(async (req, res) => {
     const {coverImageUrl} = req.body;
 
-    if(!coverImageUrl || !coverImageUrl.trim() === "") throw new ApiError(400, "Coverimage url is required");
+    if(!coverImageUrl || coverImageUrl.trim() === "") throw new ApiError(400, "Coverimage url is required");
 
     const user = await User.findByIdAndUpdate(req?.user?._id, {
         $set: {
@@ -278,6 +277,45 @@ const changeUserPassword = asyncHandler(async (req, res) => {
     )
 })
 
+const updateUserDetail = asyncHandler(async (req, res) => {
+    const {username, fullName} = req.body;
+
+    if((!username || username?.trim() === "") && (!fullName || fullName?.trim() === "")) {
+        throw new ApiError(400, "Atleast one field (username or fullName) is required");
+    }
+
+    const user = await User.findById(req?.user?._id);
+    if (!user) throw new ApiError(404, "User not found");
+
+    if(username && username.trim() !== "") {
+        const lowerUsername = username.trim().toLowerCase();
+        if(lowerUsername !== user.username) {
+            const existedUser = await User.findOne({ username: lowerUsername });
+            if(existedUser) throw new ApiError(409, "Username already exists");
+            user.username = lowerUsername;
+        }
+    }
+
+    if(fullName && fullName.trim() !== "") {
+        user.fullName = fullName.trim();
+    }
+
+    await user.save({validateBeforeSave: false});
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                username: user.username,
+                fullName: user.fullName
+            },
+            "User details updated successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     logInUser,
@@ -286,5 +324,6 @@ export {
     getCurrentUser,
     updateUserAvatar,
     updateUserCoverImage,
-    changeUserPassword
+    changeUserPassword,
+    updateUserDetail
 }
