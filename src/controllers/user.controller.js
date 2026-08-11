@@ -316,6 +316,51 @@ const updateUserDetail = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserBookmarks = asyncHandler(async (req, res) => {
+    const {page = 1, limit = 10, searchQuery = "", sortType = "asc"} = req.query;
+
+    const pipeline = [
+        {
+            $match: {
+                _id: req?.user?._id
+            }
+        },
+        {
+            $lookups: {
+                from: "tweets",
+                localField: "bookmarks",
+                foreignField: "_id",
+                as: "bookmarks",
+                pipeline: [
+                    {
+                        $lookups: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: {
+                                $first: "$owner"
+                            }
+                        }
+                    }
+                ]
+            }
+        }
+    ]
+})
+
 export {
     registerUser,
     logInUser,
@@ -325,5 +370,5 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     changeUserPassword,
-    updateUserDetail
+    updateUserDetail,
 }
