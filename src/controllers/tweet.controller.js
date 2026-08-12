@@ -3,11 +3,18 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Tweet } from "../models/tweet.model.js";
 import mongoose from "mongoose";
+import { User } from "../models/user.model.js";
 
 const createATweet = asyncHandler(async (req, res) => {
     const {content, media = [], tweetId = null} = req.body;
 
     if(!content || content?.trim() === "") throw new ApiError(400, "Content is required");
+
+    if(tweetId) {
+        const reshareTweet = await Tweet.findById(tweetId);
+    
+        if(!reshareTweet) throw new ApiError(404, "Reshare tweet does not exist");
+    }
 
     const createdTweet = await Tweet.create({
         content,
@@ -43,6 +50,15 @@ const deleteATweet = asyncHandler(async (req, res) => {
     const tweetDeleteResponse = await Tweet.deleteOne({_id: tweetId});
 
     if(!tweetDeleteResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting tweet");
+
+    await User.updateMany(
+        { bookmarks: tweetId },
+        {
+            $pull: {
+                bookmarks: tweetId
+            }
+        }
+    );
 
     res
     .status(200)
@@ -105,9 +121,38 @@ const getATweet = asyncHandler(async (req, res) => {
     )
 })
 
+const addTweetToUserBookmark = asyncHandler(async (req, res) => {
+    const {tweetId} = req.params;
+
+    if(!tweetId || tweetId.trim() === "") throw new ApiError(400, "Tweet id is required");
+
+    const tweet = await Tweet.findById(tweetId);
+
+    if(!tweet) throw new ApiError(404, "Tweet does not exist");
+
+    const user = await User.findByIdAndUpdate(req?.user?._id, {
+        $push: {
+            bookmarks: tweetId
+        }
+    });
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                bookmarked: tweetId
+            },
+            "Tweet bookmarked successfully"
+        )
+    )
+})
+
 export {
     createATweet,
     deleteATweet,
     editATweet,
-    getATweet
+    getATweet,
+    addTweetToUserBookmark
 }

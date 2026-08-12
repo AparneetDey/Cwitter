@@ -21,6 +21,8 @@ const tweetSchema = new Schema(
             ref: "User",
             require: true
         }
+    }, {
+        timestamps: true
     }
 )
 
