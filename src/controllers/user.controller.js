@@ -322,43 +322,67 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
     const pipeline = [
         {
             $match: {
-                _id: req?.user?._id
+                _id: req.user._id
             }
         },
         {
-            $lookups: {
+            $unwind: "$bookmarks"
+        },
+        {
+            $lookup: {
                 from: "tweets",
                 localField: "bookmarks",
                 foreignField: "_id",
-                as: "bookmarks",
-                pipeline: [
-                    {
-                        $lookups: {
-                            from: "users",
-                            localField: "owner",
-                            foreignField: "_id",
-                            as: "owner",
-                            pipeline: [
-                                {
-                                    $project: {
-                                        fullName: 1,
-                                        avatar: 1
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    {
-                        $addFields: {
-                            owner: {
-                                $first: "$owner"
-                            }
-                        }
-                    }
-                ]
+                as: "bookmark"
+            }
+        },
+        {
+            $unwind: "$bookmark"
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "bookmark.owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        {
+            $unwind: {
+                path: "$owner",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $project: {
+                _id: "$bookmark._id",
+                content: "$bookmark.content",
+                createdAt: "$bookmark.createdAt",
+                owner: {
+                    _id: "$owner._id",
+                    fullName: "$owner.fullName",
+                    avatar: "$owner.avatar"
+                }
             }
         }
-    ]
+    ];
+
+    const paginateOptions = {
+        page,
+        limit
+    }
+
+    const bookmarks = await User.aggregatePaginate(User.aggregate(pipeline), paginateOptions);
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            bookmarks,
+            "Bookmarks fetched successfully"
+        )
+    )
 })
 
 export {
@@ -371,4 +395,5 @@ export {
     updateUserCoverImage,
     changeUserPassword,
     updateUserDetail,
+    getUserBookmarks
 }

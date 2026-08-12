@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changeUserPassword, getCurrentUser, logInUser, logOutUser, refreshAccessToken, registerUser, updateUserAvatar, updateUserCoverImage, updateUserDetail } from "../controllers/user.controller.js";
+import { changeUserPassword, getCurrentUser, getUserBookmarks, logInUser, logOutUser, refreshAccessToken, registerUser, updateUserAvatar, updateUserCoverImage, updateUserDetail } from "../controllers/user.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = Router();
@@ -15,5 +15,6 @@ router.route("/update/avatar").patch(verifyToken, updateUserAvatar);
 router.route("/update/cover-image").patch(verifyToken, updateUserCoverImage);
 router.route("/update/password").patch(verifyToken, changeUserPassword);
 router.route("/update/details").patch(verifyToken, updateUserDetail);
+router.route("/bookmarks").get(verifyToken, getUserBookmarks);
 
 export default router;
