@@ -354,6 +354,11 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
             }
         },
         {
+            $sort: {
+                "bookmark.createdAt": sortType === "asc" ? 1 : -1
+            }
+        },
+        {
             $project: {
                 _id: "$bookmark._id",
                 content: "$bookmark.content",
@@ -367,9 +372,26 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
         }
     ];
 
+    if(searchQuery && searchQuery.trim() !== "") {
+        pipeline.push(
+            {
+                $match: {
+                    "owner.fullName": {
+                        $regex: searchQuery,
+                        $options: "i"
+                    }
+                }
+            }
+        )
+    }
+
     const paginateOptions = {
         page,
-        limit
+        limit,
+        customLabels: {
+            docs: "bookmarks",
+            totalDocs: "totalBookmarks"
+        }
     }
 
     const bookmarks = await User.aggregatePaginate(User.aggregate(pipeline), paginateOptions);
