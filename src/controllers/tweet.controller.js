@@ -27,6 +27,34 @@ const createATweet = asyncHandler(async (req, res) => {
     )
 })
 
+const deleteATweet = asyncHandler(async (req, res) => {
+    const {tweetId} = req.params;
+
+    if(!tweetId && tweetId?.trim() === "") throw new ApiError(400, "Tweet Id is required");
+
+    const storedTweet = await Tweet.findById(tweetId);
+
+    if(!storedTweet) throw new ApiError(404, "Tweet does not exist");
+
+    console.log(storedTweet.isOwner(req?.user?._id))
+    if(!storedTweet.isOwner(req?.user?._id)) throw new ApiError(401, "Unauthorized Action");
+
+    const tweetDeleteResponse = await Tweet.deleteOne({_id: tweetId});
+
+    if(!tweetDeleteResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting tweet");
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Tweet deleted successfully"
+        )
+    )
+})
+
 export {
-    createATweet
+    createATweet,
+    deleteATweet
 }

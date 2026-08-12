@@ -22,4 +22,8 @@ const tweetSchema = new Schema(
 
 tweetSchema.plugin(aggregatePaginate);
 
+tweetSchema.methods.isOwner = function (userId) {
+    return this.owner.equals(userId)
+}
+
 export const Tweet = mongoose.model("Tweet", tweetSchema);
