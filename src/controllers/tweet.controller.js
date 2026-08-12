@@ -2,26 +2,28 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Tweet } from "../models/tweet.model.js";
+import mongoose from "mongoose";
 
 const createATweet = asyncHandler(async (req, res) => {
-    const {content, media = []} = req.body;
+    const {content, media = [], tweetId = null} = req.body;
 
     if(!content || content?.trim() === "") throw new ApiError(400, "Content is required");
 
-    const tweet = await Tweet.create({
+    const createdTweet = await Tweet.create({
         content,
         media,
+        tweet: tweetId,
         owner: req?.user?._id
     })
 
-    if(!tweet) throw new ApiError(500, "Something went wrong while creating tweet");
+    if(!createdTweet) throw new ApiError(500, "Something went wrong while creating tweet");
 
     res
     .status(201)
     .json(
         new ApiResponse(
             201,
-            tweet,
+            createdTweet,
             "Tweet created successfully"
         )
     )
@@ -30,13 +32,12 @@ const createATweet = asyncHandler(async (req, res) => {
 const deleteATweet = asyncHandler(async (req, res) => {
     const {tweetId} = req.params;
 
-    if(!tweetId && tweetId?.trim() === "") throw new ApiError(400, "Tweet Id is required");
+    if(!tweetId || tweetId?.trim() === "") throw new ApiError(400, "Tweet Id is required");
 
     const storedTweet = await Tweet.findById(tweetId);
 
     if(!storedTweet) throw new ApiError(404, "Tweet does not exist");
 
-    console.log(storedTweet.isOwner(req?.user?._id))
     if(!storedTweet.isOwner(req?.user?._id)) throw new ApiError(401, "Unauthorized Action");
 
     const tweetDeleteResponse = await Tweet.deleteOne({_id: tweetId});
@@ -54,7 +55,59 @@ const deleteATweet = asyncHandler(async (req, res) => {
     )
 })
 
+const editATweet = asyncHandler(async (req, res) => {
+    const {tweetId} = req.params;
+
+    if(!tweetId || tweetId?.trim() === "") throw new ApiError(400, "Tweet Id is required");
+
+    const {content, media = []} = req.body;
+
+    if(!content || content?.trim() === "") throw new ApiError(400, "Content is required");
+
+    const storedTweet = await Tweet.findById(tweetId);
+
+    if(!storedTweet) throw new ApiError(404, "Tweet does not exist");
+    if(!storedTweet.isOwner(req?.user?._id)) throw new ApiError(401, "Unauthorized Action");
+
+    storedTweet.content = content;
+    storedTweet.media = media;
+
+    await storedTweet.save();
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            storedTweet,
+            "Tweet edited successfully"
+        )
+    )
+})
+
+const getATweet = asyncHandler(async (req, res) => {
+    const {tweetId} = req.params;
+
+    if(!tweetId || tweetId?.trim() === "") throw new ApiError(400, "Tweet Id is required");
+
+    const tweet = await Tweet.findById(tweetId);
+
+    if(!tweet) throw new ApiError(404, "Tweet does not exist");
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            tweet,
+            "Tweet fetched successfully"
+        )
+    )
+})
+
 export {
     createATweet,
-    deleteATweet
+    deleteATweet,
+    editATweet,
+    getATweet
 }
