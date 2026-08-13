@@ -149,10 +149,48 @@ const addTweetToUserBookmark = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserTweets = asyncHandler(async (req, res) => {
+    const {userId} = req.params;
+
+    if(!userId || userId?.trim() === "") throw new ApiError(400, "User id is required");
+
+    const {page = 1, limit = 10} = req.query;
+
+    const pipeline = [
+        {
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        }
+    ]
+
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "tweets",
+            totalDocs: "totalTweets"
+        }
+    }
+
+    const userTweets = await Tweet.aggregatePaginate(Tweet.aggregate(pipeline), paginateOptions);
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            userTweets,
+            "User tweets fetched successfully"
+        )
+    )
+})
+
 export {
     createATweet,
     deleteATweet,
     editATweet,
     getATweet,
-    addTweetToUserBookmark
+    addTweetToUserBookmark,
+    getUserTweets
 }
