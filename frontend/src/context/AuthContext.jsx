@@ -1,4 +1,4 @@
-import { createContext, useState } from "react";
+import { createContext, useContext, useState } from "react";
 import api from "../utils/axiosApi.util";
 
 const AuthContext = createContext(null);
@@ -9,13 +9,25 @@ const AuthProvider = ({children}) => {
     const register = async (userForm) => {
         try {
             const res = await api.post("/users/register", userForm);
-            console.log(res);
+            
+            return res.data;
         } catch (error) {
-            console.log(error);
+            throw error;
         }
     }
 
     const value = {
+        user,
         register
     }
+
+    return (
+        <AuthContext.Provider value={value}>
+            {children}
+        </AuthContext.Provider>
+    )
 }
+
+export default AuthProvider
+
+export const useAuth = () => useContext(AuthContext);

@@ -20,15 +20,20 @@ app.use(urlencoded({extended: true, limit: "16kb"}));
 app.use(express.static("public"));
 app.use(cookieParser());
 
+
 // Router imports
 import healthcheckRouter from "./routes/healthcheck.route.js";
 import imagekitRouter from "./routes/imagekit.route.js";
 import userRouter from "./routes/user.route.js";
 import tweetRouter from "./routes/tweet.route.js";
+import { errorHandler } from "./utils/errorHandler.js";
 
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/imagekit", imagekitRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/tweets", tweetRouter);
+
+// Error handler middleware
+app.use(errorHandler)
 
 export { app }
