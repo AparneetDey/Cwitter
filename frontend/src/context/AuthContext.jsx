@@ -9,16 +9,27 @@ const AuthProvider = ({children}) => {
     const register = async (userForm) => {
         try {
             const res = await api.post("/users/register", userForm);
-            
+
             return res.data;
         } catch (error) {
             throw error;
         }
     }
 
+    const login = async (userForm) => {
+        try {
+            const res = await api.post("/users/login", userForm);
+
+            return res.data;
+        } catch (error) {
+            throw error
+        }
+    }
+
     const value = {
         user,
-        register
+        register,
+        login
     }
 
     return (

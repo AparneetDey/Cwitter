@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 
 const Register = ({ onSuccess, onSwitchToLogin }) => {
@@ -259,13 +260,12 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 					<div className="mt-8 pt-6 border-t border-[#2f3336] text-center">
 						<p className="text-sm text-gray-400">
 							Already have an account?{' '}
-							<button
-								type="button"
-								onClick={onSwitchToLogin}
-								className="text-[#1d9bf0] font-semibold hover:underline ml-1 cursor-pointer bg-transparent border-none"
+							<Link
+								to="/login"
+								className="text-[#1d9bf0] font-semibold hover:underline ml-1"
 							>
 								Sign in
-							</button>
+							</Link>
 						</p>
 					</div>
 				</div>
