@@ -6,14 +6,23 @@ import RightSidebar from '../layout/RightSidebar';
 import PostList from '../post/PostList';
 import Toast from '../common/Toast';
 import EditProfileModal from './EditProfileModal';
+import VerificationModal from './VerificationModal';
 import {
   ArrowLeft,
   Calendar,
   MapPin,
   Link as LinkIcon,
   CheckCircle2,
-  Edit3
+  Edit3,
+  ShieldCheck
 } from 'lucide-react';
+import { formatDate } from '../../hooks/Date';
+
+const GithubIcon = ({ className = "w-4 h-4" }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+  </svg>
+);
 
 const INITIAL_USER_POSTS = [
   {
@@ -72,6 +81,7 @@ const Profile = () => {
 
   const [activeTab, setActiveTab] = useState('posts');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [posts, setPosts] = useState(INITIAL_USER_POSTS);
   const [trends] = useState(INITIAL_TRENDS);
   const [whoToFollow, setWhoToFollow] = useState(INITIAL_WHO_TO_FOLLOW);
@@ -156,6 +166,14 @@ const Profile = () => {
         onProfileUpdated={() => showToast('Profile updated successfully!')}
       />
 
+      {/* Account Verification Modal */}
+      <VerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={() => setIsVerificationModalOpen(false)}
+        user={user}
+        onVerifiedSuccess={() => showToast('Account verified successfully! 🎉')}
+      />
+
       <div className="w-full max-w-7xl flex">
         
         {/* Left Sidebar */}
@@ -174,8 +192,10 @@ const Profile = () => {
             </button>
             <div>
               <h2 className="text-xl font-bold text-white flex items-center space-x-1.5">
-                <span>{user.fullName}</span>
-                <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] fill-current" />
+                <span>{user?.fullName}</span>
+                {user?.isVerified && (
+                  <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] fill-current shrink-0" title="Verified Account" />
+                )}
               </h2>
               <p className="text-gray-500 text-xs">{posts.length} Posts</p>
             </div>
@@ -183,68 +203,91 @@ const Profile = () => {
 
           {/* Cover Image Banner */}
           <div className="h-48 sm:h-56 bg-[#16181c] relative overflow-hidden">
-            {user.coverImage ? (
+            {user?.coverImage ? (
               <img
                 src={user.coverImage}
                 alt="cover"
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-r from-[#1d9bf0]/40 via-[#7928ca]/30 to-[#00d2ff]/40"></div>
+              <div className="w-full h-full bg-linear-to-r from-[#1d9bf0]/40 via-[#7928ca]/30 to-[#00d2ff]/40"></div>
             )}
           </div>
 
-          {/* Avatar & Edit Profile Header Bar */}
+          {/* Avatar & Action Buttons Bar */}
           <div className="px-4 pb-4 flex justify-between items-end relative">
             {/* Avatar */}
             <div className="-mt-16 sm:-mt-20 relative">
               <img
-                src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
+                src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
                 alt="avatar"
                 className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-black bg-black"
               />
             </div>
 
-            {/* Edit Profile Button */}
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              className="cwitter-btn-outline"
-            >
-              <Edit3 className="w-4 h-4" />
-              <span>Edit profile</span>
-            </button>
+            {/* Profile Action Buttons */}
+            <div className="flex items-center space-x-2">
+              {!user?.isVerified && (
+                <button
+                  onClick={() => setIsVerificationModalOpen(true)}
+                  className="bg-[#1d9bf0]/10 hover:bg-[#1d9bf0]/20 border border-[#1d9bf0]/40 text-[#1d9bf0] font-bold px-4 py-2 rounded-full transition-all text-sm cursor-pointer flex items-center space-x-1.5"
+                  title="Verify your Cwitter account"
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>Get Verified</span>
+                </button>
+              )}
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="cwitter-btn-outline"
+              >
+                <Edit3 className="w-4 h-4" />
+                <span>Edit profile</span>
+              </button>
+            </div>
           </div>
 
           {/* User Information Details */}
           <div className="px-4 space-y-3.5 border-b border-[#2f3336] pb-4">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-1.5">
-                <span>{user.fullName}</span>
-                <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] fill-current" />
+                <span>{user?.fullName}</span>
+                {user?.isVerified && (
+                  <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] fill-current shrink-0" title="Verified Account" />
+                )}
               </h1>
-              <p className="text-gray-500 text-sm">@{user.username}</p>
+              <p className="text-gray-500 text-sm">@{user?.username}</p>
             </div>
 
-            {/* Bio */}
+            {/* Bio / Description */}
             <p className="text-[#e7e9ea] text-sm leading-relaxed">
-              Fullstack Engineer & UI Artisan 🚀 Building Cwitter with Express, React & Tailwind CSS. Passionate about performant web architectures.
+              {user?.description || 'No description provided.'}
             </p>
 
-            {/* Metadata (Location & Joined Date) */}
+            {/* Metadata (Location, GitHub & Joined Date) */}
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500 pt-1">
               <div className="flex items-center space-x-1">
                 <MapPin className="w-4 h-4 text-gray-500" />
-                <span>India</span>
+                <span>{user?.location || 'Earth'}</span>
               </div>
-              <div className="flex items-center space-x-1">
-                <LinkIcon className="w-4 h-4 text-gray-500" />
-                <a href="https://github.com" target="_blank" rel="noreferrer" className="text-[#1d9bf0] hover:underline">
-                  github.com
-                </a>
-              </div>
+
+              {user?.githubLink && (
+                <div className="flex items-center space-x-1">
+                  <GithubIcon className="w-4 h-4 text-gray-500" />
+                  <a
+                    href={user.githubLink.startsWith('http') ? user.githubLink : `https://${user.githubLink}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#1d9bf0] hover:underline"
+                  >
+                    {user.githubLink.replace(/^https?:\/\//, '')}
+                  </a>
+                </div>
+              )}
+
               <div className="flex items-center space-x-1">
                 <Calendar className="w-4 h-4 text-gray-500" />
-                <span>Joined August 2026</span>
+                <span>Joined {formatDate(user?.createdAt)}</span>
               </div>
             </div>
 

@@ -87,12 +87,6 @@ const Home = () => {
   const [whoToFollow, setWhoToFollow] = useState(INITIAL_WHO_TO_FOLLOW);
   const [toastMessage, setToastMessage] = useState('');
 
-  const displayUser = user || {
-    fullName: 'Guest User',
-    username: 'guest',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-  };
-
   const showToast = (msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
@@ -102,9 +96,9 @@ const Home = () => {
     const newPost = {
       id: Date.now(),
       author: {
-        fullName: displayUser.fullName,
-        username: displayUser.username,
-        avatar: displayUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        fullName: user?.fullName || 'Anonymous User',
+        username: user?.username || 'user',
+        avatar: user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
         verified: true,
       },
       createdAt: 'Just now',

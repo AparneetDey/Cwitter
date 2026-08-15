@@ -31,6 +31,9 @@ const userSchema = new Schema(
             required: true,
             select: false
         },
+        location: {
+            type: String
+        },
         description: {
             type: String
         },

@@ -33,7 +33,7 @@ const generateAccessAndRefreshToken = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
 
-    const { username, email, fullName, password } = req.body;
+    const { username, email, fullName, password, location } = req.body;
 
     if (
         [username, email, fullName, password].some((field) => field?.trim() === "" || !field)
@@ -54,6 +54,9 @@ const registerUser = asyncHandler(async (req, res) => {
         email,
         fullName,
         password,
+        location: location || "",
+        description: "",
+        githubLink: "",
         bookmarks: [],
         avatar: "",
         coverImage: "",
@@ -284,7 +287,7 @@ const changeUserPassword = asyncHandler(async (req, res) => {
 })
 
 const updateUserDetail = asyncHandler(async (req, res) => {
-    const { username, fullName, email, description, githubLink } = req.body;
+    const { username, fullName, email, location, description, githubLink } = req.body;
 
     if (![username, fullName, email].some(field => field?.trim())) {
         throw new ApiError(400, "Atleast one field (username or fullName or email) is required");
@@ -318,6 +321,10 @@ const updateUserDetail = asyncHandler(async (req, res) => {
         user.fullName = fullName.trim();
     }
     
+    if (location && location.trim() !== "") {
+        user.location = location.trim();
+    }
+    
     if (description && description.trim() !== "") {
         user.description = description.trim();
     }
@@ -336,7 +343,10 @@ const updateUserDetail = asyncHandler(async (req, res) => {
                 {
                     username: user.username,
                     fullName: user.fullName,
-                    email: user.email
+                    email: user.email,
+                    location: user.location,
+                    description: user.description,
+                    githubLink: user.githubLink
                 },
                 "User details updated successfully"
             )
@@ -468,7 +478,7 @@ const checkUserVerificationCode = asyncHandler(async (req, res) => {
 
     if (!user) throw new ApiError(404, "User does not exist");
 
-    if (user.verificationCode !== verificationCode) throw new ApiError(401, "Your code is invalid");
+    if (String(user.verificationCode) !== String(verificationCode).trim()) throw new ApiError(401, "Your code is invalid");
 
     user.isVerified = true;
     user.verificationCode = undefined;

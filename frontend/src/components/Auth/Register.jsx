@@ -3,6 +3,34 @@ import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import CwitterLogo from '../../elements/CwitterLogo';
 
+const COUNTRIES = [
+	'Argentina',
+	'Australia',
+	'Brazil',
+	'Canada',
+	'China',
+	'France',
+	'Germany',
+	'India',
+	'Indonesia',
+	'Italy',
+	'Japan',
+	'Mexico',
+	'Netherlands',
+	'Nigeria',
+	'Russia',
+	'Saudi Arabia',
+	'Singapore',
+	'South Africa',
+	'South Korea',
+	'Spain',
+	'Sweden',
+	'Switzerland',
+	'United Arab Emirates',
+	'United Kingdom',
+	'United States',
+];
+
 const Register = ({ onSuccess, onSwitchToLogin }) => {
 	const navigate = useNavigate();
 	const { register } = useAuth();
@@ -12,6 +40,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 		username: '',
 		email: '',
 		password: '',
+		location: '',
 	});
 
 	const [showPassword, setShowPassword] = useState(false);
@@ -30,24 +59,24 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 
 	const handleValidation = () => {
 		if (!formData.fullName.trim()) {
-			setError('Full Name is required')
+			setError('Full Name is required');
 			return true;
 		}
 		if (!formData.username.trim()) {
-			setError('Username is required')
+			setError('Username is required');
 			return true;
 		}
 		if (!formData.email.trim()) {
-			setError('Email is required')
+			setError('Email is required');
 			return true;
 		}
 		if (!formData.password || formData.password.length < 6) {
-			setError('Password must be at least 6 characters long')
+			setError('Password must be at least 6 characters long');
 			return true;
 		}
 
-		return false
-	}
+		return false;
+	};
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
@@ -129,7 +158,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 					)}
 
 					{/* Registration Form using Flexbox Layout */}
-					<form onSubmit={handleSubmit} className="flex flex-col gap-6">
+					<form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
 						{/* Full Name */}
 						<div className="flex flex-col gap-2">
@@ -180,6 +209,33 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 								required
 								className="cwitter-input"
 							/>
+						</div>
+
+						{/* Location / Country */}
+						<div className="flex flex-col gap-2">
+							<label className="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">
+								Location / Country
+							</label>
+							<div className="relative flex items-center">
+								<select
+									name="location"
+									value={formData.location}
+									onChange={handleChange}
+									className="cwitter-input appearance-none cursor-pointer pr-10"
+								>
+									<option value="" disabled className="bg-[#16181c] text-gray-500">Select your country</option>
+									{COUNTRIES.map((country) => (
+										<option key={country} value={country} className="bg-[#16181c] text-white">
+											{country}
+										</option>
+									))}
+								</select>
+								<div className="absolute right-4 pointer-events-none text-gray-400">
+									<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+									</svg>
+								</div>
+							</div>
 						</div>
 
 						{/* Password */}

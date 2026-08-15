@@ -12,12 +12,6 @@ const PostComposer = ({ onPostCreate }) => {
   const { user } = useAuth();
   const [postText, setPostText] = useState('');
 
-  const displayUser = user || {
-    fullName: 'Guest User',
-    username: 'guest',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!postText.trim()) return;
@@ -29,7 +23,7 @@ const PostComposer = ({ onPostCreate }) => {
   return (
     <div className="p-4 border-b border-[#2f3336] flex gap-4">
       <img
-        src={displayUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
+        src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
         alt="avatar"
         className="w-11 h-11 rounded-full object-cover shrink-0"
       />
