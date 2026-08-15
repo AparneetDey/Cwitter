@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router';
+import CwitterLogo from '../../elements/CwitterLogo';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -44,13 +45,6 @@ const ForgotPassword = () => {
     }
   };
 
-  // Twitter Bird SVG logo
-  const TwitterBirdLogo = ({ className = "w-full h-full" }) => (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className={`fill-current ${className}`}>
-      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.936 9.936 0 0024 4.59z"></path>
-    </svg>
-  );
-
   return (
     <div className="min-h-screen bg-black text-[#e7e9ea] font-sans flex flex-col justify-between selection:bg-[#1d9bf0] selection:text-white">
       {/* Main Container */}
@@ -58,8 +52,8 @@ const ForgotPassword = () => {
         
         {/* Left Hero */}
         <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left space-y-8">
-          <div className="w-20 h-20 md:w-32 md:h-32 text-[#1d9bf0] flex items-center justify-center transition-transform hover:scale-105 duration-300 drop-shadow-[0_0_25px_rgba(29,155,240,0.3)]">
-            <TwitterBirdLogo />
+          <div className="w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 text-[#1d9bf0] flex items-center justify-center transition-transform hover:scale-105 duration-300 drop-shadow-[0_0_35px_rgba(29,155,240,0.4)]">
+            <CwitterLogo />
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight">
@@ -79,8 +73,8 @@ const ForgotPassword = () => {
           {/* Form Header */}
           <div className="flex items-center justify-between pb-6 mb-6 border-b border-[#2f3336]">
             <h3 className="font-bold text-2xl text-white tracking-wide">Find your Cwitter account</h3>
-            <div className="w-7 h-7 text-[#1d9bf0]">
-              <TwitterBirdLogo />
+            <div className="w-10 h-10 text-[#1d9bf0]">
+              <CwitterLogo />
             </div>
           </div>
 
