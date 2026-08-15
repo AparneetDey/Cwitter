@@ -51,8 +51,6 @@ const Login = () => {
         try {
             const data = await login(formData);
 
-            // console.log(data)
-
             setSuccess('Logged in successfully!');
             setTimeout(() => {
                 navigate('/');
@@ -69,7 +67,7 @@ const Login = () => {
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans flex flex-col justify-between selection:bg-[#1d9bf0] selection:text-white">
             {/* Main Container */}
             <main className="flex-1 flex flex-col md:flex-row items-center justify-center px-6 py-10 md:px-16 max-w-7xl mx-auto w-full gap-10 lg:gap-20">
-
+                
                 {/* Left Hero: Cwitter Bird Logo & Slogan */}
                 <div className="flex-1 flex flex-col justify-center items-center md:items-start text-center md:text-left space-y-8">
                     <div className="w-32 h-32 md:w-48 md:h-48 lg:w-56 lg:h-56 text-[#1d9bf0] flex items-center justify-center transition-transform hover:scale-105 duration-300 drop-shadow-[0_0_35px_rgba(29,155,240,0.4)]">
@@ -86,7 +84,7 @@ const Login = () => {
 
                 {/* Right Section: Sign In Form Card */}
                 <div className="w-full max-w-lg bg-[#000000] border border-[#2f3336] rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
-
+                    
                     {/* Subtle Decorative Blur */}
                     <div className="absolute -top-14 -right-14 w-40 h-40 bg-[#1d9bf0] opacity-15 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -121,7 +119,7 @@ const Login = () => {
 
                     {/* Login Form using Flexbox Layout */}
                     <form onSubmit={handleSubmit} className="flex flex-col gap-6">
-
+                        
                         {/* Identity (Username or Email) */}
                         <div className="flex flex-col gap-2">
                             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">

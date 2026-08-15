@@ -1,7 +1,7 @@
 import React from 'react';
 import { Search } from 'lucide-react';
-import TrendingWidget from './TrendingWidget';
-import WhoToFollowWidget from './WhoToFollowWidget';
+import TrendingWidget from '../widgets/TrendingWidget';
+import WhoToFollowWidget from '../widgets/WhoToFollowWidget';
 
 const RightSidebar = ({ trends, whoToFollow, onToggleFollow }) => {
   return (

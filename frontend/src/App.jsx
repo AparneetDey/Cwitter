@@ -1,10 +1,10 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import AuthProvider from './context/AuthContext';
-import Home from './components/Home/Home';
-import Register from './components/Auth/Register';
-import Login from './components/Auth/Login';
-import ForgotPassword from './components/Auth/ForgotPassword';
+import Home from './components/home/Home';
+import Register from './components/auth/Register';
+import Login from './components/auth/Login';
+import ForgotPassword from './components/auth/ForgotPassword';
 
 const App = () => {
   return (

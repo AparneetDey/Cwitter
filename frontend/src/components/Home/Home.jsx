@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import Sidebar from './Sidebar';
-import FeedHeader from './FeedHeader';
-import PostComposer from './PostComposer';
-import PostList from './PostList';
-import RightSidebar from './RightSidebar';
-import Toast from '../Common/Toast';
+import Sidebar from '../layout/Sidebar';
+import FeedHeader from '../layout/FeedHeader';
+import PostComposer from '../post/PostComposer';
+import PostList from '../post/PostList';
+import RightSidebar from '../layout/RightSidebar';
+import Toast from '../common/Toast';
 
 const INITIAL_POSTS = [
   {
@@ -194,7 +194,7 @@ const Home = () => {
         <Sidebar />
 
         {/* Center Main Feed */}
-        <main className="flex-1 max-w-150 border-r border-[#2f3336] min-h-screen">
+        <main className="flex-1 max-w-[600px] border-r border-[#2f3336] min-h-screen">
           <FeedHeader activeTab={activeTab} setActiveTab={setActiveTab} />
           <PostComposer onPostCreate={handlePostCreate} />
           <PostList
