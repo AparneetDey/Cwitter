@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router';
 
 const ForgotPassword = () => {
-  const [identity, setIdentity] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -11,7 +11,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setError('');
 
-    if (!identity.trim()) {
+    if (!email.trim()) {
       return setError('Please enter your email or username');
     }
 
@@ -24,7 +24,7 @@ const ForgotPassword = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ identity: identity.trim() }),
+        body: JSON.stringify({ email: email.trim() }),
       });
 
       // Even if backend endpoint is in progress, handle smooth frontend state
@@ -95,7 +95,7 @@ const ForgotPassword = () => {
                   <span>Check your email</span>
                 </div>
                 <p className="text-sm text-emerald-100/90 leading-relaxed">
-                  We've sent a password reset link to <strong className="text-white font-semibold">{identity}</strong>. Please check your inbox and follow the instructions to reset your password.
+                  We've sent a temporary password to <strong className="text-white font-semibold">{email}</strong>. Please check your inbox and follow the instructions to reset your password.
                 </p>
               </div>
 
@@ -109,7 +109,7 @@ const ForgotPassword = () => {
           ) : (
             <>
               <p className="text-sm text-gray-400 mb-6 leading-relaxed">
-                Enter the email address or username associated with your account to receive a password reset link.
+                Enter the email address associated with your account to receive a temporary password.
               </p>
 
               {/* Error Banner */}
@@ -126,16 +126,16 @@ const ForgotPassword = () => {
               {/* Reset Request Form */}
               <form onSubmit={handleSubmit} className="flex flex-col gap-6">
                 
-                {/* Identity Field */}
+                {/* email Field */}
                 <div className="flex flex-col gap-2">
                   <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest pl-1">
-                    Email or Username
+                    Email
                   </label>
                   <input
-                    type="text"
-                    value={identity}
+                    type="email"
+                    value={email}
                     onChange={(e) => {
-                      setIdentity(e.target.value);
+                      setEmail(e.target.value);
                       if (error) setError('');
                     }}
                     placeholder="Enter your email or username"

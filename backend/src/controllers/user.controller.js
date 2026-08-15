@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
-import { sendVerificationCode } from "../utils/Email.js";
+import { sendResetPassword, sendVerificationCode } from "../utils/Email.js";
 import crypto from "crypto";
 
 const cookieOptions = {
@@ -468,6 +468,33 @@ const checkUserVerificationCode = asyncHandler(async (req, res) => {
         )
 })
 
+const forgotPassword = asyncHandler(async (req, res) => {
+    const {email} = req.body;
+
+    if(!email || email.trim() === "") throw new ApiError(400, "Email is required");
+
+    const user = await User.findOne({email});
+
+    if(!user) throw new ApiError(401, "No account exists with this email");
+
+    const resetPassword = crypto.randomBytes(12).toString("base64url").slice(0, 16);
+
+    await sendResetPassword(user.email, user.fullName, resetPassword);
+
+    user.password = resetPassword;
+    await user.save({validateBeforeSave: true});
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Password reset successfully"
+        )
+    )
+})
+
 export {
     registerUser,
     logInUser,
@@ -480,5 +507,6 @@ export {
     updateUserDetail,
     getUserBookmarks,
     startUserVerfication,
-    checkUserVerificationCode
+    checkUserVerificationCode,
+    forgotPassword
 }
