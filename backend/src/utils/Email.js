@@ -12,7 +12,7 @@ const sendVerificationCode = async (email, fullName, verificationCode) => {
         });
 
         // console.log("Message sent: %s", info.messageId);
-        console.log(info);
+        // console.log(info);
     } catch (err) {
         console.error("Error while sending mail:", err);
         throw err;

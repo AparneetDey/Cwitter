@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendVerificationCode } from "../utils/Email.js";
+import crypto from "crypto";
 
 const cookieOptions = {
     httpOnly: true,
@@ -297,7 +298,7 @@ const updateUserDetail = asyncHandler(async (req, res) => {
             username: username.toLowerCase(),
             _id: { $ne: req.user._id }
         });
-        
+
         if (existingUser) throw new ApiError(409, "Username already exists");
         user.username = lowerUsername;
     }
@@ -418,8 +419,10 @@ const startUserVerfication = asyncHandler(async (req, res) => {
     const user = await User.findById(req?.user?._id);
 
     if (!user) throw new ApiError("User does not exist");
+    if(user.isVerified) throw new ApiError(400, "User is already verified");
 
-    const verificationCode = Math.floor(100000 + Math.random() * 900000);
+    // const verificationCode = Math.floor(100000 + Math.random() * 900000);
+    const verificationCode = crypto.randomInt(100000, 1000000);
     await sendVerificationCode(user.email, user.fullName, verificationCode);
 
     user.verificationCode = verificationCode;
