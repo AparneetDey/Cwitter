@@ -19,12 +19,6 @@ const Sidebar = () => {
   const navigate = useNavigate();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  const displayUser = user || {
-    fullName: 'Guest User',
-    username: 'guest',
-    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
-  };
-
   const handleLogout = async () => {
     await logout();
     navigate('/login');
@@ -101,7 +95,7 @@ const Sidebar = () => {
               className="w-full flex items-center space-x-3 p-3 text-red-400 hover:bg-red-950/40 rounded-xl transition-colors text-sm font-semibold cursor-pointer"
             >
               <LogOut className="w-5 h-5" />
-              <span>Log out @{displayUser.username}</span>
+              <span>Log out @{user.username}</span>
             </button>
           </div>
         )}
@@ -112,13 +106,13 @@ const Sidebar = () => {
         >
           <div className="flex items-center space-x-3">
             <img
-              src={displayUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
+              src={user.avatar}
               alt="avatar"
               className="w-10 h-10 rounded-full object-cover border border-[#2f3336]"
             />
             <div className="hidden xl:flex flex-col text-left">
-              <span className="font-bold text-sm text-white truncate max-w-[120px]">{displayUser.fullName}</span>
-              <span className="text-gray-500 text-xs truncate max-w-[120px]">@{displayUser.username}</span>
+              <span className="font-bold text-sm text-white truncate max-w-30">{user.fullName}</span>
+              <span className="text-gray-500 text-xs truncate max-w-30">@{user.username}</span>
             </div>
           </div>
           <MoreHorizontal className="hidden xl:block w-5 h-5 text-gray-400" />
