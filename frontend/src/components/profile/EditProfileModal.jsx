@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { X, Camera, Loader2, AlertCircle, Mail, User as UserIcon, AtSign, FileText, Image as ImageIcon, MapPin } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Camera, Loader2, AlertCircle, Mail, User as UserIcon, AtSign, FileText, Image as ImageIcon, MapPin, Upload } from 'lucide-react';
 import api from '../../utils/axiosApi.util';
 import { useAuth } from '../../context/AuthContext';
 import { getAvatarUrl } from '../../utils/constants';
+import uploadToImageKit from '../../utils/imageKit';
 
 const GithubIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -12,6 +13,9 @@ const GithubIcon = ({ className = "w-4 h-4" }) => (
 
 const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
   const { setUser } = useAuth();
+
+  const avatarInputRef = useRef(null);
+  const coverInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     fullName: user?.fullName || '',
@@ -24,8 +28,12 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
     coverImage: user?.coverImage || '',
   });
 
-  const [showAvatarPicker, setShowAvatarPicker] = useState(false);
-  const [showCoverPicker, setShowCoverPicker] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [avatarProgress, setAvatarProgress] = useState(0);
+
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [coverProgress, setCoverProgress] = useState(0);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -40,12 +48,64 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
     if (error) setError('');
   };
 
-  const handleAvatarClick = () => {
-    setShowAvatarPicker(true);
+  // Avatar file upload handler -> Uploads to ImageKit
+  const handleAvatarFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError('');
+    setUploadingAvatar(true);
+    setAvatarProgress(0);
+
+    try {
+      const res = await uploadToImageKit(file, (progress) => {
+        setAvatarProgress(progress);
+      });
+
+      if (res?.url) {
+        setFormData((prev) => ({ ...prev, avatar: res.url }));
+      }
+    } catch (err) {
+      console.warn("ImageKit upload failed, falling back to local file preview:", err);
+      // Fallback preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFormData((prev) => ({ ...prev, avatar: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
-  const handleCoverClick = () => {
-    setShowCoverPicker(true);
+  // Cover image file upload handler -> Uploads to ImageKit
+  const handleCoverFileSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setError('');
+    setUploadingCover(true);
+    setCoverProgress(0);
+
+    try {
+      const res = await uploadToImageKit(file, (progress) => {
+        setCoverProgress(progress);
+      });
+
+      if (res?.url) {
+        setFormData((prev) => ({ ...prev, coverImage: res.url }));
+      }
+    } catch (err) {
+      console.warn("ImageKit upload failed, falling back to local file preview:", err);
+      // Fallback preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        setFormData((prev) => ({ ...prev, coverImage: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setUploadingCover(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -71,13 +131,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
 
       let updatedUserData = detailsRes.data?.data || {};
 
-      // 2. Update Avatar if changed via click
+      // 2. Update Avatar URL if changed
       if (formData.avatar && formData.avatar !== user?.avatar) {
         await api.patch('/users/update/avatar', { avatarUrl: formData.avatar });
         updatedUserData.avatar = formData.avatar;
       }
 
-      // 3. Update Cover Image if changed via click
+      // 3. Update Cover Image URL if changed
       if (formData.coverImage && formData.coverImage !== user?.coverImage) {
         await api.patch('/users/update/cover-image', { coverImageUrl: formData.coverImage });
         updatedUserData.coverImage = formData.coverImage;
@@ -89,6 +149,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
         fullName: formData.fullName,
         username: formData.username,
         email: formData.email,
+        location: formData.location,
         description: formData.description,
         githubLink: formData.githubLink,
         avatar: formData.avatar,
@@ -99,8 +160,9 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
       if (setUser) {
         setUser(fullUpdatedUser);
       }
+
       if (onProfileUpdated) {
-        onProfileUpdated(fullUpdatedUser);
+        onProfileUpdated();
       }
 
       onClose();
@@ -112,237 +174,237 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-white/10 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#000000] border border-[#2f3336] rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-fade-in relative flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 bg-white/10 backdrop-blur-sm flex items-center justify-center p-4 select-none">
+      
+      {/* Hidden File Input Elements */}
+      <input
+        type="file"
+        ref={avatarInputRef}
+        onChange={handleAvatarFileSelect}
+        accept="image/*"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={coverInputRef}
+        onChange={handleCoverFileSelect}
+        accept="image/*"
+        className="hidden"
+      />
+
+      <div className="bg-[#000000] border border-[#2f3336] rounded-3xl w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in relative">
         
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2f3336] shrink-0">
+        {/* Header Bar */}
+        <div className="sticky top-0 bg-black/90 backdrop-blur-md z-20 px-6 py-4 border-b border-[#2f3336] flex items-center justify-between">
           <div className="flex items-center space-x-4">
             <button
               onClick={onClose}
+              type="button"
               className="p-2 rounded-full hover:bg-[#181818] text-gray-400 hover:text-white transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
             <h3 className="font-bold text-xl text-white">Edit profile</h3>
           </div>
+
           <button
+            type="button"
             onClick={handleSubmit}
-            disabled={loading}
-            className="cwitter-btn-secondary"
+            disabled={loading || uploadingAvatar || uploadingCover}
+            className="cwitter-btn-secondary !w-auto !py-1.5 !px-5"
           >
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+            {loading ? (
+              <span className="flex items-center space-x-2">
+                <Loader2 className="w-4 h-4 animate-spin text-black" />
+                <span>Saving...</span>
+              </span>
+            ) : (
+              <span>Save</span>
+            )}
           </button>
         </div>
 
-        {/* Error Banner */}
-        {error && (
-          <div className="m-4 p-3.5 bg-red-950/60 border border-red-800/80 rounded-xl flex items-center space-x-3 text-red-200 text-sm">
-            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+        {/* Form Body */}
+        <div className="p-6 space-y-6">
 
-        {/* Modal Scrollable Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 overflow-y-auto flex-1">
-          
-          {/* Interactive Cover Image Banner (Changes on Click) */}
-          <div className="relative group rounded-2xl overflow-hidden h-36 bg-[#16181c] border border-[#2f3336] flex items-center justify-center">
+          {/* Error Alert */}
+          {error && (
+            <div className="p-4 bg-red-950/60 border border-red-800/80 rounded-2xl flex items-center space-x-3 text-red-200 text-sm">
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {/* Interactive Cover Banner */}
+          <div className="relative h-44 sm:h-48 bg-[#16181c] rounded-2xl overflow-hidden group border border-[#2f3336]">
             {formData.coverImage ? (
               <img
                 src={formData.coverImage}
-                alt="cover banner"
+                alt="cover"
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-linear-to-r from-[#1d9bf0]/30 via-[#7928ca]/25 to-[#00d2ff]/30"></div>
+              <div className="w-full h-full bg-gradient-to-r from-[#1d9bf0]/30 via-[#7928ca]/20 to-[#00d2ff]/30 flex items-center justify-center">
+                <span className="text-gray-500 text-xs font-semibold">No Cover Image</span>
+              </div>
             )}
-            
-            {/* Click Overlay */}
-            <button
-              type="button"
-              onClick={handleCoverClick}
-              className="absolute inset-0 bg-black/50 opacity-80 group-hover:opacity-100 flex items-center justify-center gap-2 text-white font-semibold transition-all cursor-pointer"
-              title="Click to change cover image"
-            >
-              <Camera className="w-6 h-6 text-white" />
-              <span className="text-xs bg-black/60 px-3 py-1.5 rounded-full border border-white/20">Click to change cover</span>
-            </button>
+
+            {/* Uploading Progress Overlay */}
+            {uploadingCover ? (
+              <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center text-white space-y-2">
+                <Loader2 className="w-6 h-6 animate-spin text-[#1d9bf0]" />
+                <span className="text-xs font-semibold">Uploading to ImageKit ({coverProgress}%)</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => coverInputRef.current?.click()}
+                className="absolute inset-0 bg-black/40 opacity-80 group-hover:opacity-100 flex items-center justify-center text-white transition-all cursor-pointer"
+                title="Upload cover image file"
+              >
+                <div className="p-3 bg-black/60 rounded-full hover:bg-black/80 transition-colors flex items-center space-x-2">
+                  <Camera className="w-5 h-5 text-white" />
+                  <span className="text-xs font-semibold">Upload Cover</span>
+                </div>
+              </button>
+            )}
           </div>
 
-          {/* Interactive Avatar (Changes on Click) */}
-          <div className="-mt-14 pl-2 flex items-end justify-between">
-            <div className="relative group w-24 h-24 rounded-full overflow-hidden border-4 border-black bg-[#16181c]">
+          {/* Interactive Avatar */}
+          <div className="-mt-16 pl-4 flex items-end justify-between relative z-10">
+            <div className="relative group w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-4 border-black bg-[#16181c]">
               <img
                 src={getAvatarUrl(formData.avatar)}
                 alt="avatar"
                 className="w-full h-full object-cover"
               />
-              <button
-                type="button"
-                onClick={handleAvatarClick}
-                className="absolute inset-0 bg-black/50 opacity-80 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all cursor-pointer"
-                title="Click to change avatar"
-              >
-                <Camera className="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <span className="text-xs text-gray-500 pb-2">Click images to update photo</span>
-          </div>
 
-          {/* Popover / Input dialog for Avatar URL when avatar clicked */}
-          {showAvatarPicker && (
-            <div className="p-4 bg-[#16181c] border border-[#1d9bf0]/50 rounded-2xl space-y-3 animate-fade-in">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#1d9bf0] flex items-center gap-1.5">
-                  <ImageIcon className="w-4 h-4" /> Change Avatar URL
-                </span>
+              {uploadingAvatar ? (
+                <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white p-1">
+                  <Loader2 className="w-5 h-5 animate-spin text-[#1d9bf0]" />
+                  <span className="text-[10px] font-bold mt-1">{avatarProgress}%</span>
+                </div>
+              ) : (
                 <button
                   type="button"
-                  onClick={() => setShowAvatarPicker(false)}
-                  className="text-gray-400 hover:text-white"
+                  onClick={() => avatarInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/50 opacity-80 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all cursor-pointer"
+                  title="Upload avatar image file"
                 >
-                  <X className="w-4 h-4" />
+                  <Camera className="w-6 h-6 text-white" />
+                  <span className="text-[10px] font-semibold mt-1">Photo</span>
                 </button>
-              </div>
-              <input
-                type="text"
-                name="avatar"
-                value={formData.avatar}
-                onChange={handleChange}
-                placeholder="Enter avatar image URL (e.g. https://example.com/avatar.jpg)"
-                className="cwitter-input px-4! py-2.5! text-xs!"
-              />
+              )}
             </div>
-          )}
-
-          {/* Popover / Input dialog for Cover URL when cover clicked */}
-          {showCoverPicker && (
-            <div className="p-4 bg-[#16181c] border border-[#1d9bf0]/50 rounded-2xl space-y-3 animate-fade-in">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#1d9bf0] flex items-center gap-1.5">
-                  <ImageIcon className="w-4 h-4" /> Change Cover Image URL
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowCoverPicker(false)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-              <input
-                type="text"
-                name="coverImage"
-                value={formData.coverImage}
-                onChange={handleChange}
-                placeholder="Enter cover image URL (e.g. https://example.com/cover.jpg)"
-                className="cwitter-input px-4! py-2.5! text-xs!"
-              />
-            </div>
-          )}
-
-          {/* Full Name */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
-              <UserIcon className="w-3.5 h-3.5 text-gray-400" /> Full Name
-            </label>
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Full Name"
-              required
-              className="cwitter-input px-4! py-3! text-sm!"
-            />
+            <span className="text-xs text-gray-500 pb-2">Click camera icons to upload images</span>
           </div>
 
-          {/* Username */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
-              <AtSign className="w-3.5 h-3.5 text-gray-400" /> Username
-            </label>
-            <div className="relative flex items-center">
-              <span className="absolute left-4 text-gray-500 text-sm font-medium">@</span>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                placeholder="username"
-                required
-                className="cwitter-input pl-9! pr-4! py-3! text-sm!"
-              />
-            </div>
-          </div>
-
-          {/* Email */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-gray-400" /> Email Address
-            </label>
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="email@example.com"
-              required
-              className="cwitter-input px-4! py-3! text-sm!"
-            />
-          </div>
-
-          {/* Location / Country */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
-              <MapPin className="w-3.5 h-3.5 text-gray-400" /> Location / Country
-            </label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Location e.g. India, United States"
-              className="cwitter-input px-4! py-3! text-sm!"
-            />
-          </div>
-
-          {/* Description / Bio */}
-          <div className="space-y-1.5">
-            <div className="flex justify-between items-center pl-1">
-              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-gray-400" /> Description / Bio
+          {/* Form Input Fields */}
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            
+            {/* Full Name */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+                <UserIcon className="w-3.5 h-3.5 text-gray-400" /> Full Name
               </label>
-              <span className="text-[11px] text-gray-500">{formData.description.length}/160</span>
+              <input
+                type="text"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                placeholder="Full Name"
+                required
+                className="cwitter-input !px-4 !py-3 !text-sm"
+              />
             </div>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              maxLength={160}
-              rows={3}
-              placeholder="Tell the world about yourself..."
-              className="cwitter-input px-4! py-3! text-sm! resize-none"
-            ></textarea>
-          </div>
 
-          {/* GitHub Link */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
-              <GithubIcon className="w-3.5 h-3.5 text-gray-400" /> GitHub Link
-            </label>
-            <input
-              type="url"
-              name="githubLink"
-              value={formData.githubLink}
-              onChange={handleChange}
-              placeholder="https://github.com/yourusername"
-              className="cwitter-input px-4! py-3! text-sm!"
-            />
-          </div>
+            {/* Username */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+                <AtSign className="w-3.5 h-3.5 text-gray-400" /> Username
+              </label>
+              <div className="relative flex items-center">
+                <span className="absolute left-4 text-gray-500 text-sm">@</span>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  placeholder="username"
+                  required
+                  className="cwitter-input !pl-9 !pr-4 !py-3 !text-sm"
+                />
+              </div>
+            </div>
 
-        </form>
+            {/* Email */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-gray-400" /> Email Address
+              </label>
+              <input
+                type="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="email@example.com"
+                required
+                className="cwitter-input !px-4 !py-3 !text-sm"
+              />
+            </div>
+
+            {/* Location / Country */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+                <MapPin className="w-3.5 h-3.5 text-gray-400" /> Location / Country
+              </label>
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="Location e.g. India, United States"
+                className="cwitter-input !px-4 !py-3 !text-sm"
+              />
+            </div>
+
+            {/* Description / Bio */}
+            <div className="space-y-1.5">
+              <div className="flex justify-between items-center pl-1">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-gray-400" /> Description / Bio
+                </label>
+                <span className="text-[11px] text-gray-500">{formData.description.length}/160</span>
+              </div>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                maxLength={160}
+                rows={3}
+                placeholder="Tell the world about yourself..."
+                className="cwitter-input !px-4 !py-3 !text-sm resize-none"
+              ></textarea>
+            </div>
+
+            {/* GitHub Link */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+                <GithubIcon className="w-3.5 h-3.5 text-gray-400" /> GitHub Profile Link
+              </label>
+              <input
+                type="text"
+                name="githubLink"
+                value={formData.githubLink}
+                onChange={handleChange}
+                placeholder="github.com/username"
+                className="cwitter-input !px-4 !py-3 !text-sm"
+              />
+            </div>
+
+          </form>
+
+        </div>
 
       </div>
     </div>
