@@ -1,20 +1,26 @@
 import { Router } from "express";
-import { changeUserPassword, getCurrentUser, getUserBookmarks, logInUser, logOutUser, refreshAccessToken, registerUser, updateUserAvatar, updateUserCoverImage, updateUserDetail } from "../controllers/user.controller.js";
+import { changeUserPassword, checkUserVerificationCode, getCurrentUser, getUserBookmarks, logInUser, logOutUser, refreshAccessToken, registerUser, startUserVerfication, updateUserAvatar, updateUserCoverImage, updateUserDetail } from "../controllers/user.controller.js";
 import { verifyToken } from "../middlewares/auth.middleware.js";
 
 const router = Router();
 
 router.route("/register").post(registerUser);
 router.route("/login").post(logInUser);
-router.route("/logout").delete(verifyToken, logOutUser);
 router.route("/refresh-token").get(refreshAccessToken);
 
-router.route("/current-user").get(verifyToken, getCurrentUser);
 
-router.route("/update/avatar").patch(verifyToken, updateUserAvatar);
-router.route("/update/cover-image").patch(verifyToken, updateUserCoverImage);
-router.route("/update/password").patch(verifyToken, changeUserPassword);
-router.route("/update/details").patch(verifyToken, updateUserDetail);
-router.route("/bookmarks").get(verifyToken, getUserBookmarks);
+// Protected routes
+router.use(verifyToken);
+router.route("/logout").delete(logOutUser);
+router.route("/current-user").get(getCurrentUser);
+
+router.route("/update/avatar").patch(updateUserAvatar);
+router.route("/update/cover-image").patch(updateUserCoverImage);
+router.route("/update/password").patch(changeUserPassword);
+router.route("/update/details").patch(updateUserDetail);
+router.route("/bookmarks").get(getUserBookmarks);
+
+router.route("/verify-start").get(startUserVerfication);
+router.route("/verify-check").post(checkUserVerificationCode);
 
 export default router;

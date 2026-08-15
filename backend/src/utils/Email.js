@@ -11,12 +11,12 @@ const sendVerificationCode = async (email, fullName, verificationCode) => {
             html: verificationCodeTemplate(fullName, verificationCode), // HTML body
         });
 
-        console.log("Message sent: %s", info.messageId);
-        // Preview URL is only available when using an Ethereal test account
+        // console.log("Message sent: %s", info.messageId);
         console.log(info);
     } catch (err) {
         console.error("Error while sending mail:", err);
+        throw err;
     }
 }
 
-sendVerificationCode();
+export {sendVerificationCode}
