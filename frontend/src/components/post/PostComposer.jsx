@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { getAvatarUrl } from '../../utils/constants';
 import {
   Image as ImageIcon,
   Smile,
@@ -23,9 +24,9 @@ const PostComposer = ({ onPostCreate }) => {
   return (
     <div className="p-4 border-b border-[#2f3336] flex gap-4">
       <img
-        src={user?.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
+        src={getAvatarUrl(user?.avatar)}
         alt="avatar"
-        className="w-11 h-11 rounded-full object-cover shrink-0"
+        className="w-11 h-11 rounded-full object-cover shrink-0 bg-[#16181c]"
       />
 
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-3">

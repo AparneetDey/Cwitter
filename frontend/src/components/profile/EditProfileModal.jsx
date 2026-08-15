@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Camera, Loader2, AlertCircle, Mail, User as UserIcon, AtSign, FileText, Image as ImageIcon, MapPin } from 'lucide-react';
 import api from '../../utils/axiosApi.util';
 import { useAuth } from '../../context/AuthContext';
+import { getAvatarUrl } from '../../utils/constants';
 
 const GithubIcon = ({ className = "w-4 h-4" }) => (
   <svg className={className} fill="currentColor" viewBox="0 0 24 24">
@@ -173,7 +174,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
           <div className="-mt-14 pl-2 flex items-end justify-between">
             <div className="relative group w-24 h-24 rounded-full overflow-hidden border-4 border-black bg-[#16181c]">
               <img
-                src={formData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'}
+                src={getAvatarUrl(formData.avatar)}
                 alt="avatar"
                 className="w-full h-full object-cover"
               />

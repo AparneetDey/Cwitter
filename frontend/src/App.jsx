@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import PublicRoute from './components/common/PublicRoute';
+import MainLayout from './components/layout/MainLayout';
 import Home from './components/home/Home';
 import Profile from './components/profile/Profile';
 import Register from './components/auth/Register';
@@ -11,23 +12,17 @@ import ForgotPassword from './components/auth/ForgotPassword';
 const App = () => {
   return (
     <Routes>
-      {/* Main Content Routes: Protected (Requires Login) */}
+      {/* Protected Layout Route (Sidebars stay mounted across page transitions) */}
       <Route
-        path="/"
         element={
           <ProtectedRoute>
-            <Home />
+            <MainLayout />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="/" element={<Home />} />
+        <Route path="/profile" element={<Profile />} />
+      </Route>
 
       {/* Auth Routes: Public Only (Redirects to Home if Logged In) */}
       <Route

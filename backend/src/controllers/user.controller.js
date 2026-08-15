@@ -472,13 +472,13 @@ const startUserVerfication = asyncHandler(async (req, res) => {
 const checkUserVerificationCode = asyncHandler(async (req, res) => {
     const { verificationCode } = req.body;
 
-    if (!verificationCode) throw new ApiError(400, "Verification code is required");
+    if (!verificationCode || verificationCode.trim() === "") throw new ApiError(400, "Verification code is required");
 
-    const user = await User.findById(req?.user?._id);
+    const user = await User.findById(req?.user?._id).select("+verificationCode");
 
     if (!user) throw new ApiError(404, "User does not exist");
-
-    if (String(user.verificationCode) !== String(verificationCode).trim()) throw new ApiError(401, "Your code is invalid");
+    
+    if (user.verificationCode !== verificationCode) throw new ApiError(401, "Your code is invalid");
 
     user.isVerified = true;
     user.verificationCode = undefined;

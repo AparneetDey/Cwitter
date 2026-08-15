@@ -1,4 +1,5 @@
 import React from 'react';
+import { getAvatarUrl } from '../../utils/constants';
 import {
   Heart,
   Repeat2,
@@ -15,9 +16,9 @@ const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
     <article className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer">
       {/* Author Avatar */}
       <img
-        src={post.author.avatar}
+        src={getAvatarUrl(post.author?.avatar)}
         alt={post.author.fullName}
-        className="w-11 h-11 rounded-full object-cover shrink-0"
+        className="w-11 h-11 rounded-full object-cover shrink-0 bg-[#16181c]"
       />
 
       {/* Main Content */}
@@ -27,7 +28,7 @@ const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1.5 text-sm">
             <span className="font-bold text-white hover:underline">{post.author.fullName}</span>
-            {post.author.verified && <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] fill-current" />}
+            {post.author.verified && <CheckCircle2 className="w-4 h-4 text-[#1d9bf0]" />}
             <span className="text-gray-500">@{post.author.username}</span>
             <span className="text-gray-500">·</span>
             <span className="text-gray-500">{post.createdAt}</span>

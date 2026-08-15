@@ -13,6 +13,7 @@ import {
   Feather,
   LogOut
 } from 'lucide-react';
+import { getAvatarUrl } from '../../utils/constants';
 
 const Sidebar = () => {
   const { user, logout } = useAuth();
@@ -106,9 +107,9 @@ const Sidebar = () => {
         >
           <div className="flex items-center space-x-3">
             <img
-              src={user.avatar}
+              src={getAvatarUrl(user?.avatar)}
               alt="avatar"
-              className="w-10 h-10 rounded-full object-cover border border-[#2f3336]"
+              className="w-10 h-10 rounded-full object-cover border border-[#2f3336] bg-[#16181c]"
             />
             <div className="hidden xl:flex flex-col text-left">
               <span className="font-bold text-sm text-white truncate max-w-30">{user.fullName}</span>
