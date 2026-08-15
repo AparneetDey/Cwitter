@@ -28,7 +28,8 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: true
+            required: true,
+            select: false
         },
         avatar: {
             type: String //Url from imageKit
@@ -43,14 +44,16 @@ const userSchema = new Schema(
             }
         ],
         refreshToken: {
-            type: String
+            type: String,
+            select: false
         },
         isVerified: {
             type: Boolean,
             default: false
         },
         verificationCode: {
-            type: String
+            type: String,
+            select: false
         }
     },
     {

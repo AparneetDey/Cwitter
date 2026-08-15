@@ -13,7 +13,7 @@ const verifyToken = asyncHandler(async (req, res, next) => {
 
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_KEY);
 
-        const user = await User.findById(decode._id).select("-password -refreshToken");
+        const user = await User.findById(decode._id);
 
         if(!user) throw new ApiError(401, "Invalid Access token :: Token may be expired");
 

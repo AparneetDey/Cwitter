@@ -62,7 +62,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+    const loggedInUser = await User.findById(user._id);
 
     res
         .status(201)
@@ -109,7 +109,7 @@ const logInUser = asyncHandler(async (req, res) => {
 
     const { accessToken, refreshToken } = await generateAccessAndRefreshToken(existedUser._id);
 
-    const loggedInUser = await User.findById(existedUser._id).select("-password -refreshToken");
+    const loggedInUser = await User.findById(existedUser._id);
 
     res
         .status(200)
@@ -168,7 +168,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
         const { accessToken, refreshToken } = await generateAccessAndRefreshToken(user._id);
 
-        const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+        const loggedInUser = await User.findById(user._id);
 
         res
             .status(201)
@@ -192,7 +192,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 })
 
 const getCurrentUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req?.user?._id).select("-password -refreshToken -bookmarks");
+    const user = await User.findById(req?.user?._id).select("-bookmarks");
 
     if (!user) throw new ApiError(404, "User not found");
 
@@ -284,10 +284,10 @@ const changeUserPassword = asyncHandler(async (req, res) => {
 })
 
 const updateUserDetail = asyncHandler(async (req, res) => {
-    const { username, fullName } = req.body;
+    const { username, fullName, email } = req.body;
 
-    if ((!username || username?.trim() === "") && (!fullName || fullName?.trim() === "")) {
-        throw new ApiError(400, "Atleast one field (username or fullName) is required");
+    if (![username, fullName, email].some(field => field?.trim())) {
+        throw new ApiError(400, "Atleast one field (username or fullName or email) is required");
     }
 
     const user = await User.findById(req?.user?._id);
@@ -300,8 +300,21 @@ const updateUserDetail = asyncHandler(async (req, res) => {
         });
 
         if (existingUser) throw new ApiError(409, "Username already exists");
-        user.username = lowerUsername;
+        user.username = username.toLowerCase();
     }
+
+    if (email && email.trim() !== "") {
+        const existingUser = await User.findOne({
+            email: email,
+            _id: { $ne: req.user._id }
+        });
+
+        if (existingUser) throw new ApiError(409, "email already exists");
+        user.email = email;
+        user.isVerified = false;
+    }
+
+
 
     if (fullName && fullName.trim() !== "") {
         user.fullName = fullName.trim();
@@ -316,7 +329,8 @@ const updateUserDetail = asyncHandler(async (req, res) => {
                 200,
                 {
                     username: user.username,
-                    fullName: user.fullName
+                    fullName: user.fullName,
+                    email: user.email
                 },
                 "User details updated successfully"
             )
