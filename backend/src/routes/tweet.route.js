@@ -1,17 +1,17 @@
 import { Router } from "express";
-import { verifyToken } from "../middlewares/auth.middleware.js";
+import { verifyToken, verifyUser } from "../middlewares/auth.middleware.js";
 import { addTweetToUserBookmark, createATweet, deleteATweet, editATweet, getATweet, getUserTweets } from "../controllers/tweet.controller.js";
 
 const router = Router();
 
 router.use(verifyToken);
 
-router.route("/").post(createATweet)
+router.route("/").post(verifyUser, createATweet)
 
 router.route("/:tweetId").get(getATweet)
-router.route("/delete/:tweetId").delete(deleteATweet);
-router.route("/edit/:tweetId").patch(editATweet);
-router.route("/bookmark/:tweetId").get(addTweetToUserBookmark);
+router.route("/delete/:tweetId").delete(verifyUser, deleteATweet);
+router.route("/edit/:tweetId").patch(verifyUser, editATweet);
+router.route("/bookmark/:tweetId").get(verifyUser, addTweetToUserBookmark);
 router.route("/user/:userId").get(getUserTweets);
 
 export default router;

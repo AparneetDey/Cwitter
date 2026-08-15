@@ -6,8 +6,6 @@ import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 
 const createATweet = asyncHandler(async (req, res) => {
-    if(!req?.user?.isVerified) throw new ApiError(401, "User need to be verified to create a tweet");
-    
     const {content, media = [], tweetId = null} = req.body;
 
     if(!content || content?.trim() === "") throw new ApiError(400, "Content is required");

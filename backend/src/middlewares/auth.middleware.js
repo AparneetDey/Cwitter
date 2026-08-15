@@ -25,4 +25,14 @@ const verifyToken = asyncHandler(async (req, res, next) => {
     }
 })
 
-export {verifyToken}
+const verifyUser = asyncHandler(async (req, res, next) => {
+    const user = await User.findById(req?.user?._id);
+
+    if(!user) throw new ApiError(404, "User does not exist");
+
+    if(!user.isVerified) throw new ApiError(401, "User email is not verified");
+
+    next();
+})
+
+export {verifyToken, verifyUser}
