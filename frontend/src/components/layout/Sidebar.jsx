@@ -37,17 +37,17 @@ const Sidebar = () => {
 
         {/* Navigation Links */}
         <nav className="flex flex-col gap-1">
-          <Link to="/" className="flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-white font-bold">
+          <Link to="/" className="cwitter-nav-link-active">
             <HomeIcon className="w-7 h-7" />
             <span className="hidden xl:inline text-xl">Home</span>
           </Link>
           
-          <a href="#" className="flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-gray-300 hover:text-white">
+          <a href="#" className="cwitter-nav-link">
             <Compass className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">Explore</span>
           </a>
 
-          <a href="#" className="flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-gray-300 hover:text-white relative">
+          <a href="#" className="cwitter-nav-link relative">
             <div className="relative">
               <Bell className="w-7 h-7" />
               <span className="absolute -top-1 -right-1 bg-[#1d9bf0] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">4</span>
@@ -55,22 +55,22 @@ const Sidebar = () => {
             <span className="hidden xl:inline text-xl font-medium">Notifications</span>
           </a>
 
-          <a href="#" className="flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-gray-300 hover:text-white">
+          <a href="#" className="cwitter-nav-link">
             <Mail className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">Messages</span>
           </a>
 
-          <a href="#" className="flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-gray-300 hover:text-white">
+          <a href="#" className="cwitter-nav-link">
             <Bookmark className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">Bookmarks</span>
           </a>
 
-          <a href="#" className="flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-gray-300 hover:text-white">
+          <Link to="/profile" className="cwitter-nav-link">
             <UserIcon className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">Profile</span>
-          </a>
+          </Link>
 
-          <a href="#" className="flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-gray-300 hover:text-white">
+          <a href="#" className="cwitter-nav-link">
             <MoreHorizontal className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">More</span>
           </a>

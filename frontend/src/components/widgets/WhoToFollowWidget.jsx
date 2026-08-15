@@ -3,7 +3,7 @@ import { CheckCircle2 } from 'lucide-react';
 
 const WhoToFollowWidget = ({ accounts, onToggleFollow }) => {
   return (
-    <div className="bg-[#16181c] border border-[#2f3336] rounded-2xl p-4 flex flex-col gap-3">
+    <div className="cwitter-widget-card">
       <h3 className="font-bold text-lg text-white">Who to follow</h3>
 
       <div className="flex flex-col gap-3 pt-1">
@@ -25,7 +25,7 @@ const WhoToFollowWidget = ({ accounts, onToggleFollow }) => {
               className={`px-4 py-1.5 rounded-full font-bold text-xs transition-all cursor-pointer ${
                 item.isFollowing
                   ? 'bg-transparent border border-[#2f3336] text-white hover:border-red-600 hover:text-red-500'
-                  : 'bg-white text-black hover:bg-gray-200'
+                  : 'cwitter-btn-secondary !px-4 !py-1.5 !text-xs'
               }`}
             >
               {item.isFollowing ? 'Following' : 'Follow'}

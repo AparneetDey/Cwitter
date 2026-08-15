@@ -4,6 +4,7 @@ import AuthProvider from './context/AuthContext';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import PublicRoute from './components/common/PublicRoute';
 import Home from './components/home/Home';
+import Profile from './components/profile/Profile';
 import Register from './components/auth/Register';
 import Login from './components/auth/Login';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -13,12 +14,20 @@ const App = () => {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Main Content Route: Protected (Requires Login) */}
+          {/* Main Content Routes: Protected (Requires Login) */}
           <Route
             path="/"
             element={
               <ProtectedRoute>
                 <Home />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
               </ProtectedRoute>
             }
           />

@@ -31,6 +31,12 @@ const userSchema = new Schema(
             required: true,
             select: false
         },
+        description: {
+            type: String
+        },
+        githubLink: {
+            type: String
+        },
         avatar: {
             type: String //Url from imageKit
         },

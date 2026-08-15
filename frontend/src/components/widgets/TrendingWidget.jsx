@@ -3,7 +3,7 @@ import { TrendingUp, MoreHorizontal } from 'lucide-react';
 
 const TrendingWidget = ({ trends }) => {
   return (
-    <div className="bg-[#16181c] border border-[#2f3336] rounded-2xl p-4 flex flex-col gap-3">
+    <div className="cwitter-widget-card">
       <h3 className="font-bold text-lg text-white flex items-center space-x-2">
         <TrendingUp className="w-5 h-5 text-[#1d9bf0]" />
         <span>What’s happening</span>

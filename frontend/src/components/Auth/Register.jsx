@@ -94,7 +94,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 				</div>
 
 				{/* Right Section: Sign Up Form Card */}
-				<div className="w-full max-w-lg bg-[#000000] border border-[#2f3336] rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
+				<div className="w-full max-w-lg cwitter-card">
 
 					{/* Subtle Decorative Blur */}
 					<div className="absolute -top-14 -right-14 w-40 h-40 bg-[#1d9bf0] opacity-15 rounded-full blur-3xl pointer-events-none"></div>
@@ -143,7 +143,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 								onChange={handleChange}
 								placeholder="John Doe"
 								required
-								className="w-full bg-[#16181c] text-white placeholder-gray-500 border border-[#2f3336] rounded-2xl px-5 py-3.5 text-base focus:outline-none focus:border-[#1d9bf0] focus:ring-1 focus:ring-[#1d9bf0] transition-all"
+								className="cwitter-input"
 							/>
 						</div>
 
@@ -161,7 +161,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 									onChange={handleChange}
 									placeholder="johndoe"
 									required
-									className="w-full bg-[#16181c] text-white placeholder-gray-500 border border-[#2f3336] rounded-2xl pl-10 pr-5 py-3.5 text-base focus:outline-none focus:border-[#1d9bf0] focus:ring-1 focus:ring-[#1d9bf0] transition-all"
+									className="cwitter-input pl-10"
 								/>
 							</div>
 						</div>
@@ -178,7 +178,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 								onChange={handleChange}
 								placeholder="name@example.com"
 								required
-								className="w-full bg-[#16181c] text-white placeholder-gray-500 border border-[#2f3336] rounded-2xl px-5 py-3.5 text-base focus:outline-none focus:border-[#1d9bf0] focus:ring-1 focus:ring-[#1d9bf0] transition-all"
+								className="cwitter-input"
 							/>
 						</div>
 
@@ -196,7 +196,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 										onChange={handleChange}
 										placeholder="••••••••"
 										required
-										className="w-full bg-[#16181c] text-white placeholder-gray-500 border border-[#2f3336] rounded-2xl pl-5 pr-12 py-3.5 text-base focus:outline-none focus:border-[#1d9bf0] focus:ring-1 focus:ring-[#1d9bf0] transition-all"
+										className="cwitter-input pr-12"
 									/>
 									<button
 										type="button"
@@ -237,7 +237,7 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 						<button
 							type="submit"
 							disabled={loading}
-							className="w-full bg-[#1d9bf0] hover:bg-[#1a8cd8] active:bg-[#177cc0] text-white font-bold py-4 px-6 rounded-full transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-[#1d9bf0]/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-base mt-1"
+							className="cwitter-btn-primary mt-1"
 						>
 							{loading ? (
 								<>

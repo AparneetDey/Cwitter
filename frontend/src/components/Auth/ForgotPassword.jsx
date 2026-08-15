@@ -64,7 +64,7 @@ const ForgotPassword = () => {
         </div>
 
         {/* Right Section: Forgot Password Form Card */}
-        <div className="w-full max-w-lg bg-[#000000] border border-[#2f3336] rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden">
+        <div className="w-full max-w-lg cwitter-card">
           
           {/* Subtle Decorative Blur */}
           <div className="absolute -top-14 -right-14 w-40 h-40 bg-[#1d9bf0] opacity-15 rounded-full blur-3xl pointer-events-none"></div>
@@ -94,7 +94,7 @@ const ForgotPassword = () => {
 
               <Link
                 to="/login"
-                className="w-full bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold py-4 px-6 rounded-full transition-all text-center text-base shadow-lg shadow-[#1d9bf0]/25"
+                className="cwitter-btn-primary"
               >
                 Return to Sign in
               </Link>
@@ -133,7 +133,7 @@ const ForgotPassword = () => {
                     }}
                     placeholder="Enter your email or username"
                     required
-                    className="w-full bg-[#16181c] text-white placeholder-gray-500 border border-[#2f3336] rounded-2xl px-5 py-3.5 text-base focus:outline-none focus:border-[#1d9bf0] focus:ring-1 focus:ring-[#1d9bf0] transition-all"
+                    className="cwitter-input"
                   />
                 </div>
 
@@ -141,7 +141,7 @@ const ForgotPassword = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#1d9bf0] hover:bg-[#1a8cd8] active:bg-[#177cc0] text-white font-bold py-4 px-6 rounded-full transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-[#1d9bf0]/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-base mt-2"
+                  className="cwitter-btn-primary mt-2"
                 >
                   {loading ? (
                     <>

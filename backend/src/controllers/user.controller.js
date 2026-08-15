@@ -284,7 +284,7 @@ const changeUserPassword = asyncHandler(async (req, res) => {
 })
 
 const updateUserDetail = asyncHandler(async (req, res) => {
-    const { username, fullName, email } = req.body;
+    const { username, fullName, email, description, githubLink } = req.body;
 
     if (![username, fullName, email].some(field => field?.trim())) {
         throw new ApiError(400, "Atleast one field (username or fullName or email) is required");
@@ -314,10 +314,16 @@ const updateUserDetail = asyncHandler(async (req, res) => {
         user.isVerified = false;
     }
 
-
-
     if (fullName && fullName.trim() !== "") {
         user.fullName = fullName.trim();
+    }
+    
+    if (description && description.trim() !== "") {
+        user.description = description.trim();
+    }
+    
+    if (githubLink && githubLink.trim() !== "") {
+        user.githubLink = githubLink.trim();
     }
 
     await user.save({ validateBeforeSave: false });

@@ -1,5 +1,66 @@
 @import "tailwindcss";
 
-* {
-  box-sizing: border-box;
+/* ==========================================
+   CWITTER TAILWIND DESIGN SYSTEM & UTILITIES
+   ========================================== */
+
+@layer components {
+  /* Primary Brand Button */
+  .cwitter-btn-primary {
+    @apply w-full bg-[#1d9bf0] hover:bg-[#1a8cd8] active:bg-[#177cc0] text-white font-bold py-3.5 px-6 rounded-full transition-all duration-200 flex items-center justify-center space-x-2 shadow-lg shadow-[#1d9bf0]/25 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-base;
+  }
+
+  /* Secondary Button (Solid White) */
+  .cwitter-btn-secondary {
+    @apply bg-white hover:bg-gray-200 text-black font-bold px-5 py-2 rounded-full transition-all text-sm cursor-pointer disabled:opacity-50;
+  }
+
+  /* Outlined Button */
+  .cwitter-btn-outline {
+    @apply border border-[#2f3336] hover:bg-[#181818] text-white font-bold px-5 py-2 rounded-full transition-all text-sm cursor-pointer flex items-center space-x-2;
+  }
+
+  /* Standard Input Field */
+  .cwitter-input {
+    @apply w-full bg-[#16181c] text-white placeholder-gray-500 border border-[#2f3336] rounded-2xl px-5 py-3.5 text-base focus:outline-none focus:border-[#1d9bf0] focus:ring-1 focus:ring-[#1d9bf0] transition-all;
+  }
+
+  /* Primary Card (Auth / Main Containers) */
+  .cwitter-card {
+    @apply bg-[#000000] border border-[#2f3336] rounded-3xl p-8 sm:p-10 shadow-2xl relative overflow-hidden;
+  }
+
+  /* Widget Card (Right Sidebar Widgets) */
+  .cwitter-widget-card {
+    @apply bg-[#16181c] border border-[#2f3336] rounded-2xl p-4 flex flex-col gap-3;
+  }
+
+  /* Nav Link Pill */
+  .cwitter-nav-link {
+    @apply flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-gray-300 hover:text-white;
+  }
+
+  /* Active Nav Link Pill */
+  .cwitter-nav-link-active {
+    @apply flex items-center gap-4 p-3 rounded-full hover:bg-[#181818] transition-colors text-white font-bold;
+  }
+}
+
+/* Custom Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2f3336;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #45494d;
 }
