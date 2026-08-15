@@ -143,7 +143,7 @@ const Profile = () => {
       />
 
       {/* Center Profile View */}
-      <main className="w-full max-w-[600px] border-r border-[#2f3336] min-h-screen pb-16">
+      <main className="w-full max-w-150 border-r border-[#2f3336] min-h-screen pb-16">
         
         {/* Header */}
         <header className="sticky top-0 bg-black/80 backdrop-blur-md z-30 border-b border-[#2f3336] flex items-center space-x-6 px-4 py-2">
@@ -173,7 +173,7 @@ const Profile = () => {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full bg-gradient-to-r from-[#1d9bf0]/40 via-[#7928ca]/30 to-[#00d2ff]/40"></div>
+            <div className="w-full h-full bg-linear-to-r from-[#1d9bf0]/40 via-[#7928ca]/30 to-[#00d2ff]/40"></div>
           )}
         </div>
 

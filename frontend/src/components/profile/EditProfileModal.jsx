@@ -155,7 +155,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-r from-[#1d9bf0]/30 via-[#7928ca]/25 to-[#00d2ff]/30"></div>
+              <div className="w-full h-full bg-linear-to-r from-[#1d9bf0]/30 via-[#7928ca]/25 to-[#00d2ff]/30"></div>
             )}
             
             {/* Click Overlay */}
@@ -211,7 +211,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
                 value={formData.avatar}
                 onChange={handleChange}
                 placeholder="Enter avatar image URL (e.g. https://example.com/avatar.jpg)"
-                className="cwitter-input !px-4 !py-2.5 !text-xs"
+                className="cwitter-input px-4! py-2.5! text-xs!"
               />
             </div>
           )}
@@ -237,14 +237,14 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
                 value={formData.coverImage}
                 onChange={handleChange}
                 placeholder="Enter cover image URL (e.g. https://example.com/cover.jpg)"
-                className="cwitter-input !px-4 !py-2.5 !text-xs"
+                className="cwitter-input px-4! py-2.5! text-xs!"
               />
             </div>
           )}
 
           {/* Full Name */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
               <UserIcon className="w-3.5 h-3.5 text-gray-400" /> Full Name
             </label>
             <input
@@ -254,13 +254,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
               onChange={handleChange}
               placeholder="Full Name"
               required
-              className="cwitter-input !px-4 !py-3 !text-sm"
+              className="cwitter-input px-4! py-3! text-sm!"
             />
           </div>
 
           {/* Username */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
               <AtSign className="w-3.5 h-3.5 text-gray-400" /> Username
             </label>
             <div className="relative flex items-center">
@@ -272,14 +272,14 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
                 onChange={handleChange}
                 placeholder="username"
                 required
-                className="cwitter-input !pl-9 !pr-4 !py-3 !text-sm"
+                className="cwitter-input pl-9! pr-4! py-3! text-sm!"
               />
             </div>
           </div>
 
           {/* Email */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
               <Mail className="w-3.5 h-3.5 text-gray-400" /> Email Address
             </label>
             <input
@@ -289,13 +289,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
               onChange={handleChange}
               placeholder="email@example.com"
               required
-              className="cwitter-input !px-4 !py-3 !text-sm"
+              className="cwitter-input px-4! py-3! text-sm!"
             />
           </div>
 
           {/* Location / Country */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
               <MapPin className="w-3.5 h-3.5 text-gray-400" /> Location / Country
             </label>
             <input
@@ -304,14 +304,14 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
               value={formData.location}
               onChange={handleChange}
               placeholder="Location e.g. India, United States"
-              className="cwitter-input !px-4 !py-3 !text-sm"
+              className="cwitter-input px-4! py-3! text-sm!"
             />
           </div>
 
           {/* Description / Bio */}
           <div className="space-y-1.5">
             <div className="flex justify-between items-center pl-1">
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-wider flex items-center gap-1.5">
                 <FileText className="w-3.5 h-3.5 text-gray-400" /> Description / Bio
               </label>
               <span className="text-[11px] text-gray-500">{formData.description.length}/160</span>
@@ -323,13 +323,13 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
               maxLength={160}
               rows={3}
               placeholder="Tell the world about yourself..."
-              className="cwitter-input !px-4 !py-3 !text-sm resize-none"
+              className="cwitter-input px-4! py-3! text-sm! resize-none"
             ></textarea>
           </div>
 
           {/* GitHub Link */}
           <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
+            <label className="text-xs font-bold text-gray-400 uppercase tracking-wider pl-1 flex items-center gap-1.5">
               <GithubIcon className="w-3.5 h-3.5 text-gray-400" /> GitHub Link
             </label>
             <input
@@ -338,7 +338,7 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
               value={formData.githubLink}
               onChange={handleChange}
               placeholder="https://github.com/yourusername"
-              className="cwitter-input !px-4 !py-3 !text-sm"
+              className="cwitter-input px-4! py-3! text-sm!"
             />
           </div>
 

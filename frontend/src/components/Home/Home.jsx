@@ -144,7 +144,7 @@ const Home = () => {
   };
 
   return (
-    <main className="w-full max-w-[600px] border-r border-[#2f3336] min-h-screen">
+    <main className="w-full max-w-150 border-r border-[#2f3336] min-h-screen">
       <FeedHeader activeTab={activeTab} setActiveTab={setActiveTab} />
       <PostComposer onPostCreate={handlePostCreate} />
       <PostList
