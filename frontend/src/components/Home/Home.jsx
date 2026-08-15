@@ -1,0 +1,221 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import Sidebar from './Sidebar';
+import FeedHeader from './FeedHeader';
+import PostComposer from './PostComposer';
+import PostList from './PostList';
+import RightSidebar from './RightSidebar';
+import Toast from '../Common/Toast';
+
+const INITIAL_POSTS = [
+  {
+    id: 1,
+    author: {
+      fullName: 'Cwitter Official',
+      username: 'cwitter',
+      avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
+      verified: true,
+    },
+    createdAt: '2h',
+    content: 'Welcome to the official launch of Cwitter! 🚀 Built with Express, React, and Tailwind CSS. Connect, share your thoughts, and see what is happening right now across the world.',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
+    likes: 1240,
+    retweets: 382,
+    replies: 94,
+    views: '45.2K',
+    isLiked: false,
+    isRetweeted: false,
+    isBookmarked: false,
+  },
+  {
+    id: 2,
+    author: {
+      fullName: 'Sarah Chen',
+      username: 'sarah_codes',
+      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+      verified: true,
+    },
+    createdAt: '4h',
+    content: 'Just finished setting up hot reloading and authentication routing for our fullstack Express + Vite application. Clean code structure makes development such a joy! 💻⚡',
+    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80',
+    likes: 856,
+    retweets: 142,
+    replies: 31,
+    views: '18.9K',
+    isLiked: true,
+    isRetweeted: false,
+    isBookmarked: true,
+  },
+  {
+    id: 3,
+    author: {
+      fullName: 'Design Daily',
+      username: 'designdaily',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+      verified: false,
+    },
+    createdAt: '6h',
+    content: 'Dark mode user interfaces require careful contrast calibration. Pure black (#000000) combined with subtle electric blue accents creates a sleek, high-premium aesthetic.',
+    likes: 420,
+    retweets: 88,
+    replies: 12,
+    views: '9.4K',
+    isLiked: false,
+    isRetweeted: false,
+    isBookmarked: false,
+  },
+];
+
+const INITIAL_TRENDS = [
+  { category: 'Technology · Trending', topic: '#ReactJS', posts: '45.2K posts' },
+  { category: 'Web Development · Trending', topic: '#ExpressJS', posts: '28.4K posts' },
+  { category: 'Trending in India', topic: '#CwitterLaunch', posts: '98.1K posts' },
+  { category: 'Design · Trending', topic: '#TailwindCSS', posts: '14.9K posts' },
+];
+
+const INITIAL_WHO_TO_FOLLOW = [
+  { id: 1, fullName: 'Alex Rivera', username: 'alexrivera', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80', verified: true, isFollowing: false },
+  { id: 2, fullName: 'Elena Rostova', username: 'elena_tech', avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80', verified: true, isFollowing: false },
+  { id: 3, fullName: 'DevPulse Community', username: 'devpulse', avatar: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop&q=80', verified: false, isFollowing: false },
+];
+
+const Home = () => {
+  const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState('forYou');
+  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [trends] = useState(INITIAL_TRENDS);
+  const [whoToFollow, setWhoToFollow] = useState(INITIAL_WHO_TO_FOLLOW);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const displayUser = user || {
+    fullName: 'Guest User',
+    username: 'guest',
+    avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+  };
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const handlePostCreate = (text) => {
+    const newPost = {
+      id: Date.now(),
+      author: {
+        fullName: displayUser.fullName,
+        username: displayUser.username,
+        avatar: displayUser.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
+        verified: true,
+      },
+      createdAt: 'Just now',
+      content: text,
+      likes: 0,
+      retweets: 0,
+      replies: 0,
+      views: '1',
+      isLiked: false,
+      isRetweeted: false,
+      isBookmarked: false,
+    };
+
+    setPosts([newPost, ...posts]);
+    showToast('Your post was sent!');
+  };
+
+  const handleLike = (postId) => {
+    setPosts(
+      posts.map((post) => {
+        if (post.id === postId) {
+          const isLiked = !post.isLiked;
+          return {
+            ...post,
+            isLiked,
+            likes: isLiked ? post.likes + 1 : post.likes - 1,
+          };
+        }
+        return post;
+      })
+    );
+  };
+
+  const handleRetweet = (postId) => {
+    setPosts(
+      posts.map((post) => {
+        if (post.id === postId) {
+          const isRetweeted = !post.isRetweeted;
+          return {
+            ...post,
+            isRetweeted,
+            retweets: isRetweeted ? post.retweets + 1 : post.retweets - 1,
+          };
+        }
+        return post;
+      })
+    );
+  };
+
+  const handleBookmark = (postId) => {
+    setPosts(
+      posts.map((post) => {
+        if (post.id === postId) {
+          const isBookmarked = !post.isBookmarked;
+          showToast(isBookmarked ? 'Added to your Bookmarks' : 'Removed from Bookmarks');
+          return { ...post, isBookmarked };
+        }
+        return post;
+      })
+    );
+  };
+
+  const handleShare = () => {
+    showToast('Post link copied to clipboard!');
+  };
+
+  const handleToggleFollow = (id) => {
+    setWhoToFollow(
+      whoToFollow.map((item) => {
+        if (item.id === id) {
+          return { ...item, isFollowing: !item.isFollowing };
+        }
+        return item;
+      })
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-black text-[#e7e9ea] font-sans flex justify-center selection:bg-[#1d9bf0] selection:text-white">
+      
+      {/* Toast Notification */}
+      <Toast message={toastMessage} />
+
+      <div className="w-full max-w-7xl flex">
+        
+        {/* Left Sidebar */}
+        <Sidebar />
+
+        {/* Center Main Feed */}
+        <main className="flex-1 max-w-150 border-r border-[#2f3336] min-h-screen">
+          <FeedHeader activeTab={activeTab} setActiveTab={setActiveTab} />
+          <PostComposer onPostCreate={handlePostCreate} />
+          <PostList
+            posts={posts}
+            onLike={handleLike}
+            onRetweet={handleRetweet}
+            onBookmark={handleBookmark}
+            onShare={handleShare}
+          />
+        </main>
+
+        {/* Right Sidebar */}
+        <RightSidebar
+          trends={trends}
+          whoToFollow={whoToFollow}
+          onToggleFollow={handleToggleFollow}
+        />
+
+      </div>
+    </div>
+  );
+};
+
+export default Home;

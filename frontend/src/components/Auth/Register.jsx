@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import CwitterLogo from '../../elements/CwitterLogo';
 
 const Register = ({ onSuccess, onSwitchToLogin }) => {
+	const navigate = useNavigate();
 	const { register } = useAuth();
 
 	const [formData, setFormData] = useState({
@@ -60,9 +61,12 @@ const Register = ({ onSuccess, onSwitchToLogin }) => {
 
 		try {
 
-			const data = await register(formData)
+			const data = await register(formData);
 
-			setSuccess('Account created successfully!');
+			setSuccess('Account created successfully! Redirecting...');
+			setTimeout(() => {
+				navigate('/');
+			}, 1000);
 		} catch (err) {
 			setError(err?.response?.data?.message || 'Something went wrong. Please try again.');
 		} finally {
