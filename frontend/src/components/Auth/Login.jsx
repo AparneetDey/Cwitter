@@ -51,7 +51,7 @@ const Login = () => {
         try {
             const data = await login(formData);
 
-            console.log(data)
+            // console.log(data)
 
             setSuccess('Logged in successfully!');
             setTimeout(() => {

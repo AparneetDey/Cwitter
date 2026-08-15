@@ -10,6 +10,10 @@ const AuthProvider = ({children}) => {
         try {
             const res = await api.post("/users/register", userForm);
 
+            await getCurrentUser();
+            localStorage.setItem("accessToken", res.data.data.accessToken);
+            localStorage.setItem("refreshToken", res.data.data.refreshToken);
+            
             return res.data;
         } catch (error) {
             throw error;
@@ -20,7 +24,31 @@ const AuthProvider = ({children}) => {
         try {
             const res = await api.post("/users/login", userForm);
 
+            await getCurrentUser();
+            localStorage.setItem("accessToken", res.data.data.accessToken);
+            localStorage.setItem("refreshToken", res.data.data.refreshToken);
+
             return res.data;
+        } catch (error) {
+            throw error
+        }
+    }
+
+    const forgotPassword = async (email) => {
+        try {
+            const res = await api.post("/users/forgot-password", {email});
+        } catch (error) {
+            
+			console.log(error);
+            throw error
+        }
+    }
+
+    const getCurrentUser = async () => {
+        try {
+            const res = await api.get("/users/current-user");
+
+            setUser(res.data.data.user);
         } catch (error) {
             throw error
         }
@@ -28,8 +56,10 @@ const AuthProvider = ({children}) => {
 
     const value = {
         user,
+        isAuthenticated: !!user,
         register,
-        login
+        login,
+        forgotPassword
     }
 
     return (
