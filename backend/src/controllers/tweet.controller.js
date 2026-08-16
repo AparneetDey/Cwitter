@@ -118,6 +118,11 @@ const getATweet = asyncHandler(async (req, res) => {
                     $size: "$retweets"
                 }
             }
+        },
+        {
+            $project: {
+                retweets: 0
+            }
         }
     ]);
 
@@ -128,7 +133,7 @@ const getATweet = asyncHandler(async (req, res) => {
     .json(
         new ApiResponse(
             200,
-            tweet,
+            tweet[0],
             "Tweet fetched successfully"
         )
     )
@@ -158,6 +163,40 @@ const addTweetToUserBookmark = asyncHandler(async (req, res) => {
                 bookmarked: tweetId
             },
             "Tweet bookmarked successfully"
+        )
+    )
+})
+
+const toggleRetweet = asyncHandler(async (req, res) => {
+    const {tweetId} = req.params;
+
+    if(!tweetId || tweetId?.trim() === "") throw new ApiError(400, "Tweet id is required");
+
+    const tweet = await Tweet.findById(tweetId);
+
+    if(!tweet) throw new ApiError(404, "Tweet does not exist");
+
+    if(tweet.retweets.some(userId => userId.equals(req?.user?._id))) {
+        await Tweet.findByIdAndUpdate(tweet._id, {
+            $pull: {
+                retweets: req?.user?._id
+            }
+        })
+    } else {
+        await Tweet.findByIdAndUpdate(tweetId, {
+                $addToSet: {
+                    retweets: req?.user?._id
+                }
+        })
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {},
+            "Retweet toggle successfull"
         )
     )
 })
@@ -223,5 +262,6 @@ export {
     editATweet,
     getATweet,
     addTweetToUserBookmark,
+    toggleRetweet,
     getUserTweets
 }
