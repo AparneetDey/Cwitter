@@ -325,9 +325,7 @@ const updateUserDetail = asyncHandler(async (req, res) => {
         user.location = location.trim();
     }
     
-    if (description && description.trim() !== "") {
-        user.description = description.trim();
-    }
+    user.description = description.trim();
     
     if (githubLink && githubLink.trim() !== "") {
         user.githubLink = githubLink.trim();
