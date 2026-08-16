@@ -12,15 +12,17 @@ const tweetSchema = new Schema(
                 type: String, // url from imageKit
             }
         ],
-        tweet : {
-            type: Schema.Types.ObjectId,
-            ref: "Tweet"
-        },
         owner: {
             type: Schema.Types.ObjectId,
             ref: "User",
             require: true
-        }
+        },
+        retweets: [
+            {
+                type: Schema.Types.ObjectId,
+                ref: "User"
+            }
+        ]
     }, {
         timestamps: true
     }

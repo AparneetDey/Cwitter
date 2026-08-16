@@ -6,21 +6,15 @@ import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 
 const createATweet = asyncHandler(async (req, res) => {
-    const {content, media = [], tweetId = null} = req.body;
+    const {content, media = []} = req.body;
 
     if(!content || content?.trim() === "") throw new ApiError(400, "Content is required");
-
-    if(tweetId) {
-        const reshareTweet = await Tweet.findById(tweetId);
-    
-        if(!reshareTweet) throw new ApiError(404, "Reshare tweet does not exist");
-    }
 
     const createdTweet = await Tweet.create({
         content,
         media,
-        tweet: tweetId,
-        owner: req?.user?._id
+        owner: req?.user?._id,
+        retweets: []
     })
 
     if(!createdTweet) throw new ApiError(500, "Something went wrong while creating tweet");
@@ -106,7 +100,26 @@ const getATweet = asyncHandler(async (req, res) => {
 
     if(!tweetId || tweetId?.trim() === "") throw new ApiError(400, "Tweet Id is required");
 
-    const tweet = await Tweet.findById(tweetId);
+    const tweet = await Tweet.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(tweetId)
+            }
+        },
+        {
+            $addFields: {
+                isRetweeted: {
+                    $in: [
+                        req?.user?._id,
+                        "$retweets"
+                    ]
+                },
+                totalRetweets: {
+                    $size: "$retweets"
+                }
+            }
+        }
+    ]);
 
     if(!tweet) throw new ApiError(404, "Tweet does not exist");
 
@@ -160,6 +173,24 @@ const getUserTweets = asyncHandler(async (req, res) => {
         {
             $match: {
                 owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $addFields: {
+                isRetweeted: {
+                    $in: [
+                        req?.user?._id,
+                        "$retweets"
+                    ]
+                },
+                totalRetweets: {
+                    $size: "$retweets"
+                }
+            }
+        },
+        {
+            $project: {
+                retweets: 0
             }
         }
     ]
