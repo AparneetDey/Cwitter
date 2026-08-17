@@ -30,6 +30,14 @@ const toggleFollow = asyncHandler(async (req, res) => {
     )
 })
 
+const getFollowDashboard = asyncHandler(async (req, res) => {
+    const {userId} = req.params;
+
+    if(!userId || userId?.trim()) throw new ApiError(400, "User id is required");
+
+    // Need to complete
+})
+
 export {
     toggleFollow
 }
