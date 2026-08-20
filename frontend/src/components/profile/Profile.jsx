@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import PostList from '../post/PostList';
 import EditProfileModal from './EditProfileModal';
 import VerificationModal from './VerificationModal';
+import ProfileSkeleton from './ProfileSkeleton';
 import {
   ArrowLeft,
   Calendar,
@@ -60,7 +61,7 @@ const INITIAL_USER_POSTS = [
 const Profile = () => {
   const { userId } = useParams();
   const { showToast } = useOutletContext() || {};
-  const {formatDate, formatNumber} = useFormatter();
+  const { formatDate, formatNumber } = useFormatter();
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('posts');
@@ -68,22 +69,24 @@ const Profile = () => {
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [posts, setPosts] = useState(INITIAL_USER_POSTS);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const getUserDashboard = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await api.get(`/users/dashboard/${userId}`);
-
       const data = res.data;
-
       setUser(data.data);
     } catch (error) {
-      showToast(error?.response?.data?.message);
+      if (showToast) showToast(error?.response?.data?.message || 'Failed to load profile');
+    } finally {
+      setLoading(false);
     }
-  }, [userId])
+  }, [userId, showToast]);
 
   useEffect(() => {
     getUserDashboard();
-  }, [userId, getUserDashboard])
+  }, [userId, getUserDashboard]);
 
   const triggerToast = (msg) => {
     if (showToast) showToast(msg);
@@ -138,6 +141,10 @@ const Profile = () => {
     triggerToast('Post link copied to clipboard!');
   };
 
+  if (loading || !user) {
+    return <ProfileSkeleton />;
+  }
+
   return (
     <>
       {/* Edit Profile Modal */}
@@ -145,7 +152,10 @@ const Profile = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         user={user}
-        onProfileUpdated={() => triggerToast('Profile updated successfully!')}
+        onProfileUpdated={() => {
+          getUserDashboard();
+          triggerToast('Profile updated successfully!');
+        }}
       />
 
       {/* Account Verification Modal */}
@@ -153,11 +163,14 @@ const Profile = () => {
         isOpen={isVerificationModalOpen}
         onClose={() => setIsVerificationModalOpen(false)}
         user={user}
-        onVerifiedSuccess={() => triggerToast('Account verified successfully! 🎉')}
+        onVerifiedSuccess={() => {
+          getUserDashboard();
+          triggerToast('Account verified successfully! 🎉');
+        }}
       />
 
       {/* Center Profile View */}
-      <main className="w-full max-w-150 border-r border-[#2f3336] min-h-screen pb-16">
+      <main className="w-full max-w-150 border-r border-[#2f3336] bg-black min-h-screen pb-16">
         
         {/* Header */}
         <header className="sticky top-0 bg-black/80 backdrop-blur-md z-30 border-b border-[#2f3336] flex items-center space-x-6 px-4 py-2">

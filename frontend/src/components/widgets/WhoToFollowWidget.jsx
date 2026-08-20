@@ -1,8 +1,13 @@
 import React from 'react';
 import { CheckCircle2 } from 'lucide-react';
 import { getAvatarUrl } from '../../utils/constants';
+import { WhoToFollowWidgetSkeleton } from './WidgetSkeleton';
 
-const WhoToFollowWidget = ({ accounts, onToggleFollow }) => {
+const WhoToFollowWidget = ({ accounts, onToggleFollow, loading = false }) => {
+  if (loading || !accounts) {
+    return <WhoToFollowWidgetSkeleton count={3} />;
+  }
+
   return (
     <div className="cwitter-widget-card">
       <h3 className="font-bold text-lg text-white">Who to follow</h3>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router';
 import CwitterLogo from '../../elements/CwitterLogo';
+import api from '../../utils/axiosApi.util';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -19,22 +20,9 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      // Simulate/call reset password request endpoint
-      const response = await fetch('http://localhost:8000/api/v1/users/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email.trim() }),
-      });
-
-      // Even if backend endpoint is in progress, handle smooth frontend state
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        if (response.status !== 404) {
-          throw new Error(data.message || 'Failed to send password reset email');
-        }
-      }
+      await api.post("/users/forgot-password", {
+        email: email.trim()
+      })
 
       setSubmitted(true);
     } catch (err) {

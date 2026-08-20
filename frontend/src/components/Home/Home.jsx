@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import FeedHeader from '../layout/FeedHeader';
@@ -69,6 +69,23 @@ const Home = () => {
   const { showToast } = useOutletContext() || {};
   const [activeTab, setActiveTab] = useState('forYou');
   const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [loading, setLoading] = useState(true);
+
+  // Initial feed loading simulation
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+    }, 400);
+  };
 
   const handlePostCreate = (text) => {
     const newPost = {
@@ -145,10 +162,11 @@ const Home = () => {
 
   return (
     <main className="w-full max-w-150 border-r border-[#2f3336] min-h-screen">
-      <FeedHeader activeTab={activeTab} setActiveTab={setActiveTab} />
+      <FeedHeader activeTab={activeTab} setActiveTab={handleTabChange} />
       <PostComposer onPostCreate={handlePostCreate} />
       <PostList
         posts={posts}
+        loading={loading}
         onLike={handleLike}
         onRetweet={handleRetweet}
         onBookmark={handleBookmark}

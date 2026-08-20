@@ -1,7 +1,12 @@
 import React from 'react';
 import { TrendingUp, MoreHorizontal } from 'lucide-react';
+import { TrendingWidgetSkeleton } from './WidgetSkeleton';
 
-const TrendingWidget = ({ trends }) => {
+const TrendingWidget = ({ trends, loading = false }) => {
+  if (loading || !trends) {
+    return <TrendingWidgetSkeleton count={4} />;
+  }
+
   return (
     <div className="cwitter-widget-card">
       <h3 className="font-bold text-lg text-white flex items-center space-x-2">
