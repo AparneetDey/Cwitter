@@ -19,7 +19,7 @@ const PostList = ({ posts, loading = false, onLike, onRetweet, onBookmark, onSha
     <div className="divide-y divide-[#2f3336]">
       {posts.map((post) => (
         <PostItem
-          key={post.id}
+          key={post._id}
           post={post}
           onLike={onLike}
           onRetweet={onRetweet}

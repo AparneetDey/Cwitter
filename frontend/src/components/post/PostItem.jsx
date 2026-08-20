@@ -10,39 +10,41 @@ import {
   CheckCircle2,
   MoreHorizontal
 } from 'lucide-react';
+import useFormatter from '../../hooks/useFormatter';
 
 const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
+  const {formatNumber} = useFormatter();
   return (
     <article className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer">
-      {/* Author Avatar */}
+      {/* owner Avatar */}
       <img
-        src={getAvatarUrl(post.author?.avatar)}
-        alt={post.author.fullName}
+        src={getAvatarUrl(post?.owner?.avatar)}
+        alt={post?.owner?.fullName}
         className="w-11 h-11 rounded-full object-cover shrink-0 bg-[#16181c]"
       />
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col gap-2">
         
-        {/* Author Meta Header */}
+        {/* owner Meta Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-1.5 text-sm">
-            <span className="font-bold text-white hover:underline">{post.author.fullName}</span>
-            {post.author.verified && <CheckCircle2 className="w-4 h-4 text-[#1d9bf0]" />}
-            <span className="text-gray-500">@{post.author.username}</span>
+            <span className="font-bold text-white hover:underline">{post?.owner?.fullName}</span>
+            {post?.owner?.verified && <CheckCircle2 className="w-4 h-4 text-[#1d9bf0]" />}
+            <span className="text-gray-500">@{post?.owner?.username}</span>
             <span className="text-gray-500">·</span>
-            <span className="text-gray-500">{post.createdAt}</span>
+            <span className="text-gray-500">{post?.createdAt}</span>
           </div>
           <MoreHorizontal className="w-4 h-4 text-gray-500 hover:text-white" />
         </div>
 
         {/* Post Text */}
-        <p className="text-[#e7e9ea] text-[15px] leading-normal whitespace-pre-line">{post.content}</p>
+        <p className="text-[#e7e9ea] text-[15px] leading-normal whitespace-pre-line">{post?.content}</p>
 
         {/* Post Image Attachment */}
-        {post.image && (
+        {post?.image && (
           <div className="mt-2 rounded-2xl overflow-hidden border border-[#2f3336] max-h-96">
-            <img src={post.image} alt="post media" className="w-full h-full object-cover" />
+            <img src={post?.image} alt="post media" className="w-full h-full object-cover" />
           </div>
         )}
 
@@ -54,39 +56,39 @@ const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
             <div className="p-2 rounded-full group-hover:bg-[#1d9bf0]/10">
               <MessageCircle className="w-4 h-4" />
             </div>
-            <span>{post.replies}</span>
+            <span>{post?.replies}</span>
           </button>
 
           {/* Retweet */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onRetweet(post.id);
+              onRetweet(post._id);
             }}
             className={`flex items-center space-x-2 group transition-colors cursor-pointer ${
-              post.isRetweeted ? 'text-emerald-500 font-semibold' : 'hover:text-emerald-500'
+              post?.isRetweeted ? 'text-emerald-500 font-semibold' : 'hover:text-emerald-500'
             }`}
           >
             <div className="p-2 rounded-full group-hover:bg-emerald-500/10">
               <Repeat2 className="w-4 h-4" />
             </div>
-            <span>{post.retweets}</span>
+            <span>{formatNumber(post?.totalRetweets)}</span>
           </button>
 
           {/* Like */}
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onLike(post.id);
+              onLike(post._id);
             }}
             className={`flex items-center space-x-2 group transition-colors cursor-pointer ${
-              post.isLiked ? 'text-rose-500 font-semibold' : 'hover:text-rose-500'
+              post?.isLiked ? 'text-rose-500 font-semibold' : 'hover:text-rose-500'
             }`}
           >
             <div className="p-2 rounded-full group-hover:bg-rose-500/10">
               <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-current' : ''}`} />
             </div>
-            <span>{post.likes}</span>
+            <span>{post?.likes || 100}</span>
           </button>
 
           {/* Views */}
@@ -94,7 +96,7 @@ const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
             <div className="p-2">
               <BarChart2 className="w-4 h-4" />
             </div>
-            <span>{post.views}</span>
+            <span>{post?.views || 100}</span>
           </div>
 
           {/* Bookmark & Share */}
@@ -105,10 +107,10 @@ const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
                 onBookmark(post.id);
               }}
               className={`p-2 rounded-full hover:bg-[#1d9bf0]/10 cursor-pointer ${
-                post.isBookmarked ? 'text-[#1d9bf0]' : 'hover:text-[#1d9bf0]'
+                post?.isBookmarked ? 'text-[#1d9bf0]' : 'hover:text-[#1d9bf0]'
               }`}
             >
-              <Bookmark className={`w-4 h-4 ${post.isBookmarked ? 'fill-current' : ''}`} />
+              <Bookmark className={`w-4 h-4 ${post?.isBookmarked ? 'fill-current' : ''}`} />
             </button>
             <button
               onClick={(e) => {

@@ -67,9 +67,10 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  const [posts, setPosts] = useState(INITIAL_USER_POSTS);
+  const [posts, setPosts] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [postLoading, setPostLoading] = useState(true)
 
   const getUserDashboard = useCallback(async () => {
     setLoading(true);
@@ -87,6 +88,24 @@ const Profile = () => {
   useEffect(() => {
     getUserDashboard();
   }, [userId, getUserDashboard]);
+
+  const getUserTweets = useCallback(async () => {
+    setPostLoading(true);
+    try {
+      const res = await api.get(`tweets/user/${userId}`);
+
+      const data = res.data;
+
+      setPosts(data.data.tweets);
+    } catch (error) {
+      if (showToast) showToast(error?.response?.data?.message || 'Failed to load profile');
+    }
+  }, [userId, showToast])
+
+  useEffect(() => {
+    getUserTweets();
+  }, [userId, getUserTweets])
+  
 
   const triggerToast = (msg) => {
     if (showToast) showToast(msg);
@@ -187,7 +206,7 @@ const Profile = () => {
                 <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] shrink-0" title="Verified Account" />
               )}
             </h2>
-            <p className="text-gray-500 text-xs">{posts.length} Posts</p>
+            <p className="text-gray-500 text-xs">{posts?.length ? formatNumber(posts.length) : 0} Posts</p>
           </div>
         </header>
 
