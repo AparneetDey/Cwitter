@@ -11,9 +11,11 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import useFormatter from '../../hooks/useFormatter';
+import api from '../../utils/axiosApi.util';
 
 const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
-  const {formatNumber} = useFormatter();
+  const {formatNumber, formatTimeAgo} = useFormatter();
+
   return (
     <article className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer">
       {/* owner Avatar */}
@@ -33,7 +35,7 @@ const PostItem = ({ post, onLike, onRetweet, onBookmark, onShare }) => {
             {post?.owner?.verified && <CheckCircle2 className="w-4 h-4 text-[#1d9bf0]" />}
             <span className="text-gray-500">@{post?.owner?.username}</span>
             <span className="text-gray-500">·</span>
-            <span className="text-gray-500">{post?.createdAt}</span>
+            <span className="text-gray-500">{formatTimeAgo(post?.createdAt)}</span>
           </div>
           <MoreHorizontal className="w-4 h-4 text-gray-500 hover:text-white" />
         </div>
