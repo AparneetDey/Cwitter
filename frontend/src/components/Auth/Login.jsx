@@ -56,7 +56,6 @@ const Login = () => {
                 navigate('/');
             }, 1000);
         } catch (err) {
-            console.log(err)
             setError(err?.response?.data?.message || 'Something went wrong. Please try again.');
         } finally {
             setLoading(false);

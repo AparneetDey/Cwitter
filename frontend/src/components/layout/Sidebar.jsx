@@ -66,7 +66,7 @@ const Sidebar = () => {
             <span className="hidden xl:inline text-xl font-medium">Bookmarks</span>
           </a>
 
-          <Link to="/profile" className="cwitter-nav-link">
+          <Link to={`/profile/${user._id}`} className="cwitter-nav-link">
             <UserIcon className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">Profile</span>
           </Link>

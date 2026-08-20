@@ -216,6 +216,10 @@ const getUserDashboard = asyncHandler(async (req, res) => {
 
     if(!userId || userId.trim() === "") throw new ApiError(400, "User id is required");
 
+    const existedUser = await User.findById(userId);
+
+    if(!existedUser) throw new ApiError("User does not exist");
+
     const user = await User.aggregate([
         {
             $match: {

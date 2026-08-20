@@ -21,7 +21,7 @@ const App = () => {
         }
       >
         <Route path="/" element={<Home />} />
-        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<Profile />} />
       </Route>
 
       {/* Auth Routes: Public Only (Redirects to Home if Logged In) */}
