@@ -5,6 +5,7 @@ import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import { sendResetPassword, sendVerificationCode } from "../utils/Email.js";
 import crypto from "crypto";
+import mongoose from "mongoose";
 
 const cookieOptions = {
     httpOnly: true,
@@ -208,6 +209,62 @@ const getCurrentUser = asyncHandler(async (req, res) => {
                 "Fetched current user successfully"
             )
         )
+})
+
+const getUserDashboard = asyncHandler(async (req, res) => {
+    const {userId} = req.params;
+
+    if(!userId || userId.trim() === "") throw new ApiError(400, "User id is required");
+
+    const user = await User.aggregate([
+        {
+            $match: {
+                _id: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup: {
+                from: "follows",
+                localField: "_id",
+                foreignField: "following",
+                as: "followers"
+            }
+        },
+        {
+            $lookup: {
+                from: "follows",
+                localField: "_id",
+                foreignField: "follower",
+                as: "followings"
+            }
+        },
+        {
+            $addFields: {
+                totalFollowers: {
+                    $size: "$followers"
+                },
+                totalFollowings: {
+                    $size: "$followings"
+                }
+            }
+        },
+        {
+            $project: {
+                followers: 0,
+                followings: 0
+            }
+        }
+    ])
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            user[0],
+            "User dashboard fetched successfully"
+        )
+    )
 })
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
@@ -529,6 +586,7 @@ export {
     logOutUser,
     refreshAccessToken,
     getCurrentUser,
+    getUserDashboard,
     updateUserAvatar,
     updateUserCoverImage,
     changeUserPassword,

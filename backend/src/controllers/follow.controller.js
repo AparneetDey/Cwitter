@@ -13,10 +13,13 @@ const toggleFollow = asyncHandler(async (req, res) => {
         following: followingId
     })
 
-    if(isUserFollowing > 0) {
+    let message = "Follow toggle successfull"
+    if(isUserFollowing.length > 0) {
         await Follow.deleteOne({follower: req?.user?._id, following: followingId})
+        message = "User unfollow successfull";
     } else {
         await Follow.create({follower: req?.user?._id, following: followingId})
+        message = "User follow successfull";
     }
 
     res
@@ -25,17 +28,9 @@ const toggleFollow = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             {},
-            "Follow toggle successfull"
+            message
         )
     )
-})
-
-const getFollowDashboard = asyncHandler(async (req, res) => {
-    const {userId} = req.params;
-
-    if(!userId || userId?.trim()) throw new ApiError(400, "User id is required");
-
-    // Need to complete
 })
 
 export {
