@@ -37,7 +37,7 @@ const toggleFollow = asyncHandler(async (req, res) => {
 const getUserFollowers = asyncHandler(async (req, res) => {
     const {userId} = req.params;
 
-    if(!userId || userId.trim() === "") throw new ApiError(400, "User Id is required");
+    if(!userId || userId.trim() === "") throw new ApiError(400, "User id is required");
 
     const {page = 1, limit = 30} = req.query;
 
@@ -60,7 +60,8 @@ const getUserFollowers = asyncHandler(async (req, res) => {
                             username: 1,
                             fullName: 1,
                             avatar: 1,
-                            description: 1
+                            description: 1,
+                            isVerified: 1
                         }
                     }
                 ]
@@ -115,6 +116,7 @@ const getUserFollowers = asyncHandler(async (req, res) => {
                 fullName: "$follower.fullName",
                 avatar: "$follower.avatar",
                 description: "$follower.description",
+                isVerified: "$follower.isVerified",
                 isFollowing: 1
             }
         }
@@ -142,7 +144,118 @@ const getUserFollowers = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserFollowings = asyncHandler(async (req, res) => {
+    const {userId} = req.params;
+
+    if(!userId || userId.trim() === "") throw new ApiError(400, "User id is required");
+
+    const {page = 1, limit = 30} = req.query;
+
+    const pipeline = [
+        {
+            $match: {
+                follower: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "following",
+                foreignField: "_id",
+                as: "following",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                            description: 1,
+                            isVerified: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: "$following"
+        },
+        {
+            $lookup: {
+                from: "follows",
+                let: {
+                    followerId: "$following._id"
+                },
+                as: "followingBack",
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    {
+                                        $eq: [
+                                            "$follower",
+                                            new mongoose.Types.ObjectId(req?.user?._id)
+                                        ],
+                                        $eq: [
+                                            "$following",
+                                            "$followerId"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                isFollowing: {
+                    $gt: [
+                        {$size: "$followingBack"},
+                        0
+                    ]
+                }
+            }
+        },
+        {
+            $project: {
+                _id: "$following._id",
+                username: "$following.username",
+                fullName: "$following.fullName",
+                avatar: "$following.avatar",
+                description: "$following.description",
+                isVerified: "$following.isVerified",
+                isFollowing: 1
+            }
+        }
+    ]
+
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "followings",
+            totalDocs: "totalFollowings"
+        }
+    }
+
+    const followings = await Follow.aggregatePaginate(Follow.aggregate(pipeline), paginateOptions);
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            followings,
+            "User followers fetched successfully"
+        )
+    )
+})
+
 export {
     toggleFollow,
-    getUserFollowers
+    getUserFollowers,
+    getUserFollowings
 }
