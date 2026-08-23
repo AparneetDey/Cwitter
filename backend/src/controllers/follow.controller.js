@@ -39,7 +39,9 @@ const getUserFollowers = asyncHandler(async (req, res) => {
 
     if(!userId || userId.trim() === "") throw new ApiError(400, "User Id is required");
 
-    const userFollowers = await Follow.aggregate([
+    const {page = 1, limit = 30} = req.query;
+
+    const pipeline = [
         {
             $match: {
                 following: new mongoose.Types.ObjectId(userId)
@@ -116,16 +118,25 @@ const getUserFollowers = asyncHandler(async (req, res) => {
                 isFollowing: 1
             }
         }
-    ])
+    ]
+
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "followers",
+            totalDocs: "totalFollowers"
+        }
+    }
+
+    const followers = await Follow.aggregatePaginate(Follow.aggregate(pipeline), paginateOptions);
 
     res
     .status(200)
     .json(
         new ApiResponse(
             200,
-            {
-                followers: userFollowers || []
-            },
+            followers,
             "User followers fetched successfully"
         )
     )
