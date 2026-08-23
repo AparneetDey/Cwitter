@@ -328,7 +328,9 @@ const changeUserPassword = asyncHandler(async (req, res) => {
 
     if ([oldPassword, newPassword].some((field) => field?.trim() === "" || !field)) throw new ApiError(400, "All fields are required");
 
-    const user = await User.findById(req?.user?._id);
+    const user = await User.findById(req?.user?._id).select("+password");
+
+    if(!user) throw new ApiError(404, "User not found")
 
     const isPasswordCorrect = await user.isPasswordCorrect(oldPassword)
     if (!isPasswordCorrect) throw new ApiError(401, "Unauthorized Request");
