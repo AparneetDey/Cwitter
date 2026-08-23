@@ -2,9 +2,14 @@ import React from 'react';
 import { useNavigate } from 'react-router';
 import { CheckCircle2 } from 'lucide-react';
 import { getAvatarUrl } from '../../utils/constants';
+import UserListSkeleton from './UserListSkeleton';
 
-const UserList = ({ users, onToggleFollow, emptyMessage = 'No users found.' }) => {
+const UserList = ({ users, loading,  onToggleFollow, emptyMessage = 'No users found.' }) => {
   const navigate = useNavigate();
+
+  if(loading) {
+    return <UserListSkeleton count={4} />;
+  }
 
   if (!users || users.length === 0) {
     return (

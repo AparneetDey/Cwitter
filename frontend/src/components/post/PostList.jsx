@@ -15,6 +15,8 @@ const PostList = ({ posts, loading = false, onLike, onRetweet, onBookmark, onSha
     );
   }
 
+  console.log(posts)
+
   return (
     <div className="divide-y divide-[#2f3336]">
       {posts.map((post) => (
