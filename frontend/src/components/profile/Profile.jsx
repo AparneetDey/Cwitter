@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import PostList from '../post/PostList';
+import UserList from './UserList';
+import UserListSkeleton from './UserListSkeleton';
 import EditProfileModal from './EditProfileModal';
 import VerificationModal from './VerificationModal';
 import ProfileSkeleton from './ProfileSkeleton';
@@ -58,6 +60,84 @@ const INITIAL_USER_POSTS = [
   },
 ];
 
+const DUMMY_FOLLOWERS = [
+  {
+    _id: 'follower_1',
+    fullName: 'Alex Rivera',
+    username: 'alexrivera',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    isVerified: true,
+    description: 'Senior Software Engineer @TechCo | Passionate about Distributed Systems & Open Source 🚀',
+    isFollowing: true,
+  },
+  {
+    _id: 'follower_2',
+    fullName: 'Elena Rostova',
+    username: 'elena_tech',
+    avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&auto=format&fit=crop&q=80',
+    isVerified: true,
+    description: 'Product Designer & Frontend Developer. Creating delight in digital experiences 🎨✨',
+    isFollowing: false,
+  },
+  {
+    _id: 'follower_3',
+    fullName: 'Marcus Vance',
+    username: 'marcus_vance',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    isVerified: false,
+    description: 'Fullstack JavaScript enthusiast. React, Node.js, Express & MongoDB 💻',
+    isFollowing: true,
+  },
+  {
+    _id: 'follower_4',
+    fullName: 'Sophia Thorne',
+    username: 'sophiathorne',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    isVerified: true,
+    description: 'AI Researcher & Tech Columnist. Writing about LLMs, Agents & the future of Web3 🌐',
+    isFollowing: false,
+  },
+];
+
+const DUMMY_FOLLOWING = [
+  {
+    _id: 'following_1',
+    fullName: 'Sarah Chen',
+    username: 'sarah_codes',
+    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
+    isVerified: true,
+    description: 'Vite & React Core contributor. Building ultra-fast web development tooling ⚡',
+    isFollowing: true,
+  },
+  {
+    _id: 'following_2',
+    fullName: 'DevPulse Community',
+    username: 'devpulse',
+    avatar: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=150&auto=format&fit=crop&q=80',
+    isVerified: false,
+    description: 'Daily developer news, tutorials, and tech ecosystem insights 📢',
+    isFollowing: true,
+  },
+  {
+    _id: 'following_3',
+    fullName: 'Design Daily',
+    username: 'designdaily',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    isVerified: true,
+    description: 'Curating world-class UI/UX design inspiration and modern typography 🎯',
+    isFollowing: true,
+  },
+  {
+    _id: 'following_4',
+    fullName: 'OpenSource Foundation',
+    username: 'opensource',
+    avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
+    isVerified: true,
+    description: 'Supporting open collaboration and free software development worldwide 🌍',
+    isFollowing: true,
+  },
+];
+
 const Profile = () => {
   const { userId } = useParams();
   const { showToast } = useOutletContext() || {};
@@ -65,12 +145,17 @@ const Profile = () => {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState('posts');
+  const [tabLoading, setTabLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [posts, setPosts] = useState(null);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [postLoading, setPostLoading] = useState(true)
+  const [postLoading, setPostLoading] = useState(true);
+
+  // Dummy followers/following state
+  const [followersList, setFollowersList] = useState(DUMMY_FOLLOWERS);
+  const [followingList, setFollowingList] = useState(DUMMY_FOLLOWING);
 
   const getUserDashboard = useCallback(async () => {
     setLoading(true);
@@ -93,22 +178,56 @@ const Profile = () => {
     setPostLoading(true);
     try {
       const res = await api.get(`tweets/user/${userId}`);
-
       const data = res.data;
-
       setPosts(data.data.tweets);
     } catch (error) {
-      if (showToast) showToast(error?.response?.data?.message || 'Failed to load profile');
+      // Fallback to initial dummy posts if backend tweets not available
+      setPosts(INITIAL_USER_POSTS);
+    } finally {
+      setPostLoading(false);
     }
-  }, [userId, showToast])
+  }, [userId]);
 
   useEffect(() => {
     getUserTweets();
-  }, [userId, getUserTweets])
-  
+  }, [userId, getUserTweets]);
 
   const triggerToast = (msg) => {
     if (showToast) showToast(msg);
+  };
+
+  const handleTabChange = (tabName) => {
+    setActiveTab(tabName);
+    setTabLoading(true);
+    setTimeout(() => {
+      setTabLoading(false);
+    }, 300);
+  };
+
+  const handleToggleFollower = (id) => {
+    setFollowersList((prev) =>
+      prev.map((item) => {
+        if (item._id === id) {
+          const isFollowing = !item.isFollowing;
+          triggerToast(isFollowing ? `You followed @${item.username}` : `Unfollowed @${item.username}`);
+          return { ...item, isFollowing };
+        }
+        return item;
+      })
+    );
+  };
+
+  const handleToggleFollowing = (id) => {
+    setFollowingList((prev) =>
+      prev.map((item) => {
+        if (item._id === id) {
+          const isFollowing = !item.isFollowing;
+          triggerToast(isFollowing ? `You followed @${item.username}` : `Unfollowed @${item.username}`);
+          return { ...item, isFollowing };
+        }
+        return item;
+      })
+    );
   };
 
   const handleLike = (postId) => {
@@ -206,7 +325,7 @@ const Profile = () => {
                 <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] shrink-0" title="Verified Account" />
               )}
             </h2>
-            <p className="text-gray-500 text-xs">{posts?.length ? formatNumber(posts.length) : 0} Posts</p>
+            <p className="text-gray-500 text-xs">{posts?.length || 0} Posts</p>
           </div>
         </header>
 
@@ -300,26 +419,35 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Followers / Following Stats */}
+          {/* Followers / Following Stats - Clickable to switch tabs */}
           <div className="flex items-center space-x-4 text-xs sm:text-sm pt-1">
-            <div className="hover:underline cursor-pointer">
-              <span className="font-bold text-white">{formatNumber(user?.totalFollowings)}</span>{' '}
+            <button
+              type="button"
+              onClick={() => handleTabChange('following')}
+              className="hover:underline cursor-pointer flex items-center space-x-1 text-left"
+            >
+              <span className="font-bold text-white">{formatNumber(user?.totalFollowings || followingList.length)}</span>
               <span className="text-gray-500">Following</span>
-            </div>
-            <div className="hover:underline cursor-pointer">
-              <span className="font-bold text-white">{formatNumber(user?.totalFollowers)}</span>{' '}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange('followers')}
+              className="hover:underline cursor-pointer flex items-center space-x-1 text-left"
+            >
+              <span className="font-bold text-white">{formatNumber(user?.totalFollowers || followersList.length)}</span>
               <span className="text-gray-500">Followers</span>
-            </div>
+            </button>
           </div>
         </div>
 
         {/* Profile Navigation Tabs */}
-        <div className="flex border-b border-[#2f3336]">
-          {['posts', 'replies', 'highlights', 'media', 'likes'].map((tab) => (
+        <div className="flex border-b border-[#2f3336] overflow-x-auto no-scrollbar">
+          {['posts', 'followers', 'following', 'replies', 'likes'].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm capitalize relative hover:bg-[#181818] transition-colors cursor-pointer ${
+              onClick={() => handleTabChange(tab)}
+              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm capitalize relative hover:bg-[#181818] transition-colors cursor-pointer shrink-0 px-3 ${
                 activeTab === tab ? 'text-white' : 'text-gray-500'
               }`}
             >
@@ -332,13 +460,38 @@ const Profile = () => {
         </div>
 
         {/* Tab Content Stream */}
-        <PostList
-          posts={posts}
-          onLike={handleLike}
-          onRetweet={handleRetweet}
-          onBookmark={handleBookmark}
-          onShare={handleShare}
-        />
+        {tabLoading ? (
+          activeTab === 'followers' || activeTab === 'following' ? (
+            <UserListSkeleton count={4} />
+          ) : (
+            <PostList loading={true} />
+          )
+        ) : activeTab === 'followers' ? (
+          <UserList
+            users={followersList}
+            onToggleFollow={handleToggleFollower}
+            emptyMessage="No followers yet."
+          />
+        ) : activeTab === 'following' ? (
+          <UserList
+            users={followingList}
+            onToggleFollow={handleToggleFollowing}
+            emptyMessage="Not following anyone yet."
+          />
+        ) : activeTab === 'posts' ? (
+          <PostList
+            posts={posts}
+            loading={postLoading}
+            onLike={handleLike}
+            onRetweet={handleRetweet}
+            onBookmark={handleBookmark}
+            onShare={handleShare}
+          />
+        ) : (
+          <div className="p-12 text-center text-gray-500 text-sm">
+            No {activeTab} yet.
+          </div>
+        )}
 
       </main>
     </>
