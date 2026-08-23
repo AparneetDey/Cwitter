@@ -46,14 +46,77 @@ const getUserFollowers = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "users",
+                localField: "follower",
+                foreignField: "_id",
+                as: "follower",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 1,
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                            description: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $unwind: "$follower"
+        },
+        {
+            $lookup: {
+                from: "follows",
+                let: {
+                    followerId: "$follower._id"
+                },
+                as: "followingBack",
+                pipeline: [
+                    {
+                        $match: {
+                            $expr: {
+                                $and: [
+                                    {
+                                        $eq: [
+                                            "$follower",
+                                            new mongoose.Types.ObjectId(req?.user?._id)
+                                        ],
+                                        $eq: [
+                                            "$following",
+                                            "$followerId"
+                                        ]
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                isFollowing: {
+                    $gt: [
+                        {$size: "$followingBack"},
+                        0
+                    ]
+                }
+            }
+        },
+        {
             $project: {
-                _id: 0,
-                follower: 1,
+                _id: "$follower._id",
+                username: "$follower.username",
+                fullName: "$follower.fullName",
+                avatar: "$follower.avatar",
+                description: "$follower.description",
+                isFollowing: 1
             }
         }
     ])
-
-    console.log(userFollowers)
 
     res
     .status(200)
@@ -61,8 +124,7 @@ const getUserFollowers = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             {
-                followers: userFollowers || [],
-                totalFollowers: userFollowers?.length || 0
+                followers: userFollowers || []
             },
             "User followers fetched successfully"
         )
