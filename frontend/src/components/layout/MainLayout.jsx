@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Outlet } from 'react-router';
 import Sidebar from './Sidebar';
 import RightSidebar from './RightSidebar';
@@ -22,10 +22,10 @@ const MainLayout = () => {
   const [whoToFollow, setWhoToFollow] = useState(INITIAL_WHO_TO_FOLLOW);
   const [toastMessage, setToastMessage] = useState('');
 
-  const showToast = (msg) => {
+  const showToast = useCallback((msg) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(''), 3000);
-  };
+  }, []);
 
   const handleToggleFollow = (id) => {
     setWhoToFollow((prev) =>

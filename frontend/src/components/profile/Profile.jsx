@@ -30,12 +30,20 @@ const Profile = () => {
   const [tabLoading, setTabLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  const [posts, setPosts] = useState(null);
+  
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  // Cached tab state (null means not loaded yet)
+  const [posts, setPosts] = useState(null);
   const [followersList, setFollowersList] = useState(null);
   const [followingList, setFollowingList] = useState(null);
 
+  const triggerToast = useCallback((msg) => {
+    if (showToast) showToast(msg);
+  }, [showToast]);
+
+  // Fetch Profile Overview Dashboard
   const getUserDashboard = useCallback(async () => {
     setLoading(true);
     try {
@@ -49,87 +57,132 @@ const Profile = () => {
     }
   }, [userId, showToast]);
 
-  useEffect(() => {
-    getUserDashboard();
-  }, [userId, getUserDashboard]);
-
+  // Fetch User Posts / Tweets
   const getUserTweets = useCallback(async () => {
     setTabLoading(true);
     try {
       const res = await api.get(`tweets/user/${userId}`);
       const data = res.data;
-      setPosts(data.data.tweets);
+      setPosts(data.data.tweets || []);
     } catch (error) {
-      if(showToast) showToast(error?.response?.data?.message || "Failed to fetch posts")
+      if (showToast) showToast(error?.response?.data?.message || "Failed to fetch posts");
+      setPosts([]);
     } finally {
       setTabLoading(false);
     }
-  }, [userId]);
+  }, [userId, showToast]);
 
+  // Fetch User Followers
   const getUserFollowers = useCallback(async () => {
     setTabLoading(true);
     try {
       const res = await api.get(`follows/followers/${userId}`);
       const data = res.data;
-      setFollowersList(data.data.followers);
+      setFollowersList(data.data.followers || []);
     } catch (error) {
-      if(showToast) showToast(error?.response?.data?.message || "Failed to fetch followers")
+      if (showToast) showToast(error?.response?.data?.message || "Failed to fetch followers");
+      setFollowersList([]);
     } finally {
       setTabLoading(false);
     }
-  },[userId])
-  
+  }, [userId, showToast]);
 
-  useEffect(() => {
-    if(activeTab === "posts") {
-      getUserTweets();
-    } else if(activeTab === "followers") {
-      getUserFollowers();
+  // Fetch User Followings
+  const getUserFollowings = useCallback(async () => {
+    setTabLoading(true);
+    try {
+      const res = await api.get(`follows/followings/${userId}`);
+      const data = res.data;
+      setFollowingList(data.data.followings || []);
+    } catch (error) {
+      if (showToast) showToast(error?.response?.data?.message || "Failed to fetch followings");
+      setFollowingList([]);
+    } finally {
+      setTabLoading(false);
     }
-  }, [userId, activeTab, getUserTweets, getUserFollowers]);
+  }, [userId, showToast]);
 
-  const triggerToast = (msg) => {
-    if (showToast) showToast(msg);
-  };
+  // Load dashboard overview when userId changes & reset tab caches
+  useEffect(() => {
+    setPosts(null);
+    setFollowersList(null);
+    setFollowingList(null);
+    setActiveTab('posts');
+    getUserDashboard();
+  }, [userId, getUserDashboard]);
+
+  // Optimized lazy-fetching: fetch data for activeTab ONLY if not already fetched
+  useEffect(() => {
+    if (activeTab === 'posts' && posts === null) {
+      getUserTweets();
+    } else if (activeTab === 'followers' && followersList === null) {
+      getUserFollowers();
+    } else if (activeTab === 'following' && followingList === null) {
+      getUserFollowings();
+    }
+  }, [activeTab, posts, followersList, followingList, getUserTweets, getUserFollowers, getUserFollowings]);
 
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
-    // setTabLoading(true);
-    // setTimeout(() => {
-    //   setTabLoading(false);
-    // }, 100);
   };
 
-  const handleToggleFollower = (id) => {
+  // Real-time API toggle follow / unfollow with instant optimistic UI update
+  const handleToggleUserFollow = async (targetUserId) => {
+    // 1. Instant optimistic local UI update
     setFollowersList((prev) =>
-      prev.map((item) => {
-        if (item._id === id) {
-          const isFollowing = !item.isFollowing;
-          triggerToast(isFollowing ? `You followed @${item.username}` : `Unfollowed @${item.username}`);
-          return { ...item, isFollowing };
-        }
-        return item;
-      })
+      prev
+        ? prev.map((item) =>
+            String(item._id || item.id) === String(targetUserId)
+              ? { ...item, isFollowing: !item.isFollowing }
+              : item
+          )
+        : null
     );
-  };
 
-  const handleToggleFollowing = (id) => {
     setFollowingList((prev) =>
-      prev.map((item) => {
-        if (item._id === id) {
-          const isFollowing = !item.isFollowing;
-          triggerToast(isFollowing ? `You followed @${item.username}` : `Unfollowed @${item.username}`);
-          return { ...item, isFollowing };
-        }
-        return item;
-      })
+      prev
+        ? prev.map((item) =>
+            String(item._id || item.id) === String(targetUserId)
+              ? { ...item, isFollowing: !item.isFollowing }
+              : item
+          )
+        : null
     );
+
+    // 2. Async backend API call
+    try {
+      const res = await api.get(`/follows/${targetUserId}`);
+      const message = res?.data?.message || 'Updated follow status';
+      triggerToast(message);
+    } catch (error) {
+      // Revert optimistic update on error
+      setFollowersList((prev) =>
+        prev
+          ? prev.map((item) =>
+              String(item._id || item.id) === String(targetUserId)
+                ? { ...item, isFollowing: !item.isFollowing }
+                : item
+            )
+          : null
+      );
+      setFollowingList((prev) =>
+        prev
+          ? prev.map((item) =>
+              String(item._id || item.id) === String(targetUserId)
+                ? { ...item, isFollowing: !item.isFollowing }
+                : item
+            )
+          : null
+      );
+      triggerToast(error?.response?.data?.message || 'Failed to toggle follow');
+    }
   };
 
   const handleLike = (postId) => {
+    if (!posts) return;
     setPosts(
       posts.map((post) => {
-        if (post.id === postId) {
+        if (post.id === postId || post._id === postId) {
           const isLiked = !post.isLiked;
           return {
             ...post,
@@ -143,9 +196,10 @@ const Profile = () => {
   };
 
   const handleRetweet = (postId) => {
+    if (!posts) return;
     setPosts(
       posts.map((post) => {
-        if (post.id === postId) {
+        if (post.id === postId || post._id === postId) {
           const isRetweeted = !post.isRetweeted;
           return {
             ...post,
@@ -159,9 +213,10 @@ const Profile = () => {
   };
 
   const handleBookmark = (postId) => {
+    if (!posts) return;
     setPosts(
       posts.map((post) => {
-        if (post.id === postId) {
+        if (post.id === postId || post._id === postId) {
           const isBookmarked = !post.isBookmarked;
           triggerToast(isBookmarked ? 'Added to your Bookmarks' : 'Removed from Bookmarks');
           return { ...post, isBookmarked };
@@ -175,22 +230,21 @@ const Profile = () => {
     triggerToast('Post link copied to clipboard!');
   };
 
-  // Helper method to cleanly render tab content without cluttered inline ternaries
+  // Render tab stream content cleanly
   const renderTabContent = () => {
-    // if (tabLoading) {
-    //   if (activeTab === 'followers' || activeTab === 'following') {
-    //     return <UserListSkeleton count={4} />;
-    //   }
-    //   return <PostList loading={postLoading} />;
-    // }
+    if (tabLoading) {
+      if (activeTab === 'followers' || activeTab === 'following') {
+        return <UserListSkeleton count={4} />;
+      }
+      return <PostList loading={true} />;
+    }
 
     switch (activeTab) {
       case 'followers':
         return (
           <UserList
             users={followersList}
-            loading={tabLoading}
-            onToggleFollow={handleToggleFollower}
+            onToggleFollow={handleToggleUserFollow}
             emptyMessage="No followers yet."
           />
         );
@@ -198,8 +252,7 @@ const Profile = () => {
         return (
           <UserList
             users={followingList}
-            loading={tabLoading}
-            onToggleFollow={handleToggleFollowing}
+            onToggleFollow={handleToggleUserFollow}
             emptyMessage="Not following anyone yet."
           />
         );
@@ -207,7 +260,6 @@ const Profile = () => {
         return (
           <PostList
             posts={posts}
-            loading={tabLoading}
             onLike={handleLike}
             onRetweet={handleRetweet}
             onBookmark={handleBookmark}
@@ -403,7 +455,7 @@ const Profile = () => {
           ))}
         </div>
 
-        {/* Clean, Readable Tab Content Stream */}
+        {/* Clean Tab Stream Content */}
         {renderTabContent()}
 
       </main>
