@@ -278,7 +278,61 @@ const getUserTweets = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserFeed = asyncHandler(async (req, res) => {
+    const {page = 1, limit = 15} = req.query;
 
+    const feed = await Tweet.aggregate([
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                            isVerified: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                totalRetweets: {
+                    $size: "$retweets"
+                },
+                owner: {
+                    $first: "$owner"
+                }
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1,
+                totalRetweets: -1
+            }
+        },
+        {
+            $project: {
+                retweets: 0
+            }
+        }
+    ])
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            feed,
+            "For you feed fetched successfully"
+        )
+    )
+})
 
 export {
     createATweet,
@@ -287,5 +341,6 @@ export {
     getATweet,
     addTweetToUserBookmark,
     toggleRetweet,
-    getUserTweets
+    getUserTweets,
+    getUserFeed
 }
