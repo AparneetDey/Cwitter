@@ -320,13 +320,22 @@ const getUserDashboard = asyncHandler(async (req, res) => {
                 },
                 totalFollowings: {
                     $size: "$followings"
+                },
+                isFollowing: {
+                    $in: [
+                        new mongoose.Types.ObjectId(req?.user?._id),
+                        "$followers.follower"
+                    ]
                 }
             }
         },
         {
             $project: {
                 followers: 0,
-                followings: 0
+                followings: 0,
+                password: 0,
+                refreshToken: 0,
+                bookmarks: 0
             }
         }
     ])

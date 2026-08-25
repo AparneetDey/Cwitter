@@ -22,6 +22,7 @@ import useFormatter from '../../hooks/useFormatter';
 
 const Profile = () => {
   const { userId } = useParams();
+  const { user: currentUser } = useAuth();
   const { showToast } = useOutletContext() || {};
   const { formatDate, formatNumber } = useFormatter();
   const navigate = useNavigate();
@@ -38,6 +39,8 @@ const Profile = () => {
   const [posts, setPosts] = useState(null);
   const [followersList, setFollowersList] = useState(null);
   const [followingList, setFollowingList] = useState(null);
+
+  const isOwnProfile = currentUser?._id && (String(currentUser._id) === String(user?._id) || String(currentUser._id) === String(userId));
 
   const triggerToast = useCallback((msg) => {
     if (showToast) showToast(msg);
@@ -126,7 +129,47 @@ const Profile = () => {
     setActiveTab(tabName);
   };
 
-  // Real-time API toggle follow / unfollow with instant optimistic UI update
+  // Toggle follow status directly on the target user profile page
+  const handleToggleProfileFollow = async () => {
+    if (!user) return;
+    const targetUserId = user._id || userId;
+    const nextIsFollowing = !user.isFollowing;
+
+    // Instant optimistic update
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            isFollowing: nextIsFollowing,
+            totalFollowers: nextIsFollowing
+              ? (prev.totalFollowers || 0) + 1
+              : Math.max(0, (prev.totalFollowers || 0) - 1),
+          }
+        : prev
+    );
+
+    try {
+      const res = await api.get(`/follows/${targetUserId}`);
+      const message = res?.data?.message || (nextIsFollowing ? `You followed @${user.username}` : `Unfollowed @${user.username}`);
+      triggerToast(message);
+    } catch (error) {
+      // Revert on failure
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              isFollowing: !nextIsFollowing,
+              totalFollowers: !nextIsFollowing
+                ? (prev.totalFollowers || 0) + 1
+                : Math.max(0, (prev.totalFollowers || 0) - 1),
+            }
+          : prev
+      );
+      triggerToast(error?.response?.data?.message || 'Failed to toggle follow');
+    }
+  };
+
+  // Real-time API toggle follow / unfollow for user card list
   const handleToggleUserFollow = async (targetUserId) => {
     // 1. Instant optimistic local UI update
     setFollowersList((prev) =>
@@ -351,23 +394,38 @@ const Profile = () => {
 
           {/* Profile Action Buttons */}
           <div className="flex items-center space-x-2">
-            {!user?.isVerified && (
+            {isOwnProfile ? (
+              <>
+                {!user?.isVerified && (
+                  <button
+                    onClick={() => setIsVerificationModalOpen(true)}
+                    className="bg-[#1d9bf0]/10 hover:bg-[#1d9bf0]/20 border border-[#1d9bf0]/40 text-[#1d9bf0] font-bold px-4 py-2 rounded-full transition-all text-sm cursor-pointer flex items-center space-x-1.5"
+                    title="Verify your Cwitter account"
+                  >
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Get Verified</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="cwitter-btn-outline"
+                >
+                  <Edit3 className="w-4 h-4" />
+                  <span>Edit profile</span>
+                </button>
+              </>
+            ) : (
               <button
-                onClick={() => setIsVerificationModalOpen(true)}
-                className="bg-[#1d9bf0]/10 hover:bg-[#1d9bf0]/20 border border-[#1d9bf0]/40 text-[#1d9bf0] font-bold px-4 py-2 rounded-full transition-all text-sm cursor-pointer flex items-center space-x-1.5"
-                title="Verify your Cwitter account"
+                onClick={handleToggleProfileFollow}
+                className={`px-5 py-2 rounded-full font-bold text-sm transition-all cursor-pointer ${
+                  user?.isFollowing
+                    ? 'bg-transparent border border-[#2f3336] text-white hover:border-red-600 hover:text-red-500'
+                    : 'cwitter-btn-secondary !px-5 !py-2 !text-sm'
+                }`}
               >
-                <ShieldCheck className="w-4 h-4" />
-                <span>Get Verified</span>
+                {user?.isFollowing ? 'Following' : 'Follow'}
               </button>
             )}
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              className="cwitter-btn-outline"
-            >
-              <Edit3 className="w-4 h-4" />
-              <span>Edit profile</span>
-            </button>
           </div>
         </div>
 
