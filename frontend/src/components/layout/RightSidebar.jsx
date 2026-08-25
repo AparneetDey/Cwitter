@@ -3,7 +3,7 @@ import SearchBar from '../widgets/SearchBar';
 import TrendingWidget from '../widgets/TrendingWidget';
 import WhoToFollowWidget from '../widgets/WhoToFollowWidget';
 
-const RightSidebar = ({ trends, whoToFollow, onToggleFollow }) => {
+const RightSidebar = () => {
   return (
     <aside className="hidden lg:flex flex-col gap-4 w-80 xl:w-90 p-4 sticky top-0 h-screen overflow-y-auto select-none shrink-0">
       
@@ -22,10 +22,10 @@ const RightSidebar = ({ trends, whoToFollow, onToggleFollow }) => {
       </div>
 
       {/* Trending Topics */}
-      <TrendingWidget trends={trends} />
+      <TrendingWidget />
 
       {/* Who to Follow */}
-      <WhoToFollowWidget accounts={whoToFollow} onToggleFollow={onToggleFollow} />
+      <WhoToFollowWidget />
 
       {/* Footer Terms */}
       <footer className="px-2 text-xs text-gray-500 flex flex-wrap gap-x-3 gap-y-1">

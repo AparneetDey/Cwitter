@@ -2,7 +2,14 @@ import React from 'react';
 import { TrendingUp, MoreHorizontal } from 'lucide-react';
 import { TrendingWidgetSkeleton } from './WidgetSkeleton';
 
-const TrendingWidget = ({ trends, loading = false }) => {
+const DEFAULT_TRENDS = [
+  { category: 'Technology · Trending', topic: '#JavaScript', posts: '124.5K posts' },
+  { category: 'Web Development · Trending', topic: 'React 19', posts: '85.2K posts' },
+  { category: 'AI & Data · Trending', topic: 'Antigravity AI', posts: '42.1K posts' },
+  { category: 'Design · Trending', topic: '#TailwindCSS', posts: '28.9K posts' },
+];
+
+const TrendingWidget = ({ trends = DEFAULT_TRENDS, loading = false }) => {
   if (loading || !trends) {
     return <TrendingWidgetSkeleton count={4} />;
   }
