@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
-import { usePost } from '../../context/PostContext';
 import PostList from '../post/PostList';
 import UserList from './UserList';
 import UserListSkeleton from './UserListSkeleton';
@@ -24,7 +23,6 @@ import useFormatter from '../../hooks/useFormatter';
 const Profile = () => {
   const { userId } = useParams();
   const { user: currentUser } = useAuth();
-  const { toggleLike, toggleRetweet, toggleBookmark, sharePost } = usePost();
   const { showToast } = useOutletContext() || {};
   const { formatDate, formatNumber } = useFormatter();
   const navigate = useNavigate();
@@ -253,10 +251,7 @@ const Profile = () => {
         return (
           <PostList
             posts={posts}
-            onLike={(id) => toggleLike(id, posts, setPosts)}
-            onRetweet={(id) => toggleRetweet(id, posts, setPosts, showToast)}
-            onBookmark={(id) => toggleBookmark(id, posts, setPosts, showToast)}
-            onShare={(id) => sharePost(id, showToast)}
+            setPosts={setPosts}
           />
         );
       default:

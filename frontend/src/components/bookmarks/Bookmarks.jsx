@@ -2,14 +2,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { Bookmark as BookmarkIcon, MoreHorizontal } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { usePost } from '../../context/PostContext';
 import PostList from '../post/PostList';
 import PostSkeleton from '../post/PostSkeleton';
 import api from '../../utils/axiosApi.util';
 
 const Bookmarks = () => {
   const { user } = useAuth();
-  const { toggleLike, toggleRetweet, toggleBookmark, sharePost } = usePost();
   const { showToast } = useOutletContext() || {};
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -41,8 +39,7 @@ const Bookmarks = () => {
   }, [getBookmarks]);
 
   const handleBookmarkToggle = (postId) => {
-    toggleBookmark(postId, bookmarks, setBookmarks, showToast);
-    // Filter out unbookmarked item from active bookmarks list
+    // Filter out unbookmarked item from active bookmarks list view
     setBookmarks((prev) => prev.filter((post) => String(post.id || post._id) !== String(postId)));
   };
 
@@ -66,10 +63,8 @@ const Bookmarks = () => {
       ) : bookmarks.length > 0 ? (
         <PostList
           posts={bookmarks}
-          onLike={(id) => toggleLike(id, bookmarks, setBookmarks)}
-          onRetweet={(id) => toggleRetweet(id, bookmarks, setBookmarks, showToast)}
-          onBookmark={handleBookmarkToggle}
-          onShare={(id) => sharePost(id, showToast)}
+          setPosts={setBookmarks}
+          onBookmarkToggle={handleBookmarkToggle}
         />
       ) : (
         /* Empty State */

@@ -4,51 +4,56 @@ import api from '../utils/axiosApi.util';
 const PostContext = createContext(null);
 
 export const PostProvider = ({ children }) => {
-  // Helper to trigger toast safely
   const triggerToast = (showToast, message) => {
     if (showToast && typeof showToast === 'function') {
       showToast(message);
     }
   };
 
-  // Toggle Like Action
-  const toggleLike = useCallback((postId, posts, setPosts) => {
-    if (!posts || !setPosts) return;
+  // Toggle Like (handles local state mutation if setPosts supplied or optimistic toggle)
+  const toggleLike = useCallback((postId, setPosts) => {
+    if (!setPosts) return;
 
     setPosts((prevPosts) =>
-      prevPosts.map((post) => {
-        const id = post._id || post.id;
-        if (String(id) === String(postId)) {
-          const isLiked = !post.isLiked;
-          return {
-            ...post,
-            isLiked,
-            likes: isLiked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 1) - 1),
-          };
-        }
-        return post;
-      })
+      prevPosts
+        ? prevPosts.map((post) => {
+            const id = post._id || post.id;
+            if (String(id) === String(postId)) {
+              const isLiked = !post.isLiked;
+              return {
+                ...post,
+                isLiked,
+                likes: isLiked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 1) - 1),
+              };
+            }
+            return post;
+          })
+        : prevPosts
     );
   }, []);
 
-  // Toggle Retweet Action (with API call)
-  const toggleRetweet = useCallback(async (postId, posts, setPosts, showToast) => {
+  // Toggle Retweet (optimistic state toggle + API endpoint trigger)
+  const toggleRetweet = useCallback(async (postId, setPosts, showToast) => {
     let nextRetweetedState = false;
 
-    if (posts && setPosts) {
+    if (setPosts) {
       setPosts((prevPosts) =>
-        prevPosts.map((post) => {
-          const id = post._id || post.id;
-          if (String(id) === String(postId)) {
-            nextRetweetedState = !post.isRetweeted;
-            return {
-              ...post,
-              isRetweeted: nextRetweetedState,
-              retweets: nextRetweetedState ? (post.retweets || 0) + 1 : Math.max(0, (post.retweets || 1) - 1),
-            };
-          }
-          return post;
-        })
+        prevPosts
+          ? prevPosts.map((post) => {
+              const id = post._id || post.id;
+              if (String(id) === String(postId)) {
+                nextRetweetedState = !post.isRetweeted;
+                return {
+                  ...post,
+                  isRetweeted: nextRetweetedState,
+                  retweets: nextRetweetedState
+                    ? (post.retweets || 0) + 1
+                    : Math.max(0, (post.retweets || 1) - 1),
+                };
+              }
+              return post;
+            })
+          : prevPosts
       );
     }
 
@@ -60,29 +65,32 @@ export const PostProvider = ({ children }) => {
     }
   }, []);
 
-  // Toggle Bookmark Action (with API call)
-  const toggleBookmark = useCallback(async (postId, posts, setPosts, showToast) => {
+  // Toggle Bookmark (optimistic state toggle + API endpoint trigger)
+  const toggleBookmark = useCallback(async (postId, setPosts, showToast) => {
     let nextBookmarkedState = false;
 
-    if (posts && setPosts) {
+    if (setPosts) {
       setPosts((prevPosts) =>
-        prevPosts.map((post) => {
-          const id = post._id || post.id;
-          if (String(id) === String(postId)) {
-            nextBookmarkedState = !post.isBookmarked;
-            return {
-              ...post,
-              isBookmarked: nextBookmarkedState,
-            };
-          }
-          return post;
-        })
+        prevPosts
+          ? prevPosts.map((post) => {
+              const id = post._id || post.id;
+              if (String(id) === String(postId)) {
+                nextBookmarkedState = !post.isBookmarked;
+                return {
+                  ...post,
+                  isBookmarked: nextBookmarkedState,
+                };
+              }
+              return post;
+            })
+          : prevPosts
       );
     }
 
     try {
       const res = await api.get(`/tweets/bookmark/${postId}`);
-      const message = res?.data?.message || (nextBookmarkedState ? 'Added to your Bookmarks' : 'Removed from Bookmarks');
+      const message =
+        res?.data?.message || (nextBookmarkedState ? 'Added to your Bookmarks' : 'Removed from Bookmarks');
       triggerToast(showToast, message);
     } catch (error) {
       triggerToast(showToast, error?.response?.data?.message || 'Failed to toggle bookmark');

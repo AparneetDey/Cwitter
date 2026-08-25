@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
-import { usePost } from '../../context/PostContext';
 import FeedHeader from '../layout/FeedHeader';
 import PostComposer from '../post/PostComposer';
 import PostList from '../post/PostList';
@@ -67,7 +66,6 @@ const INITIAL_POSTS = [
 
 const Home = () => {
   const { user } = useAuth();
-  const { toggleLike, toggleRetweet, toggleBookmark, sharePost } = usePost();
   const { showToast } = useOutletContext() || {};
   const [activeTab, setActiveTab] = useState('forYou');
   const [posts, setPosts] = useState(INITIAL_POSTS);
@@ -119,11 +117,8 @@ const Home = () => {
       <PostComposer onPostCreate={handlePostCreate} />
       <PostList
         posts={posts}
+        setPosts={setPosts}
         loading={loading}
-        onLike={(id) => toggleLike(id, posts, setPosts)}
-        onRetweet={(id) => toggleRetweet(id, posts, setPosts, showToast)}
-        onBookmark={(id) => toggleBookmark(id, posts, setPosts, showToast)}
-        onShare={(id) => sharePost(id, showToast)}
       />
     </main>
   );
