@@ -1,114 +1,71 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import FeedHeader from '../layout/FeedHeader';
 import PostComposer from '../post/PostComposer';
 import PostList from '../post/PostList';
-
-const INITIAL_POSTS = [
-  {
-    id: 1,
-    author: {
-      fullName: 'Cwitter Official',
-      username: 'cwitter',
-      avatar: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=150&auto=format&fit=crop&q=80',
-      verified: true,
-    },
-    createdAt: '2h',
-    content: 'Welcome to the official launch of Cwitter! 🚀 Built with Express, React, and Tailwind CSS. Connect, share your thoughts, and see what is happening right now across the world.',
-    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80',
-    likes: 1240,
-    retweets: 382,
-    replies: 94,
-    views: '45.2K',
-    isLiked: false,
-    isRetweeted: false,
-    isBookmarked: false,
-  },
-  {
-    id: 2,
-    author: {
-      fullName: 'Sarah Chen',
-      username: 'sarah_codes',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      verified: true,
-    },
-    createdAt: '4h',
-    content: 'Just finished setting up hot reloading and authentication routing for our fullstack Express + Vite application. Clean code structure makes development such a joy! 💻⚡',
-    image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80',
-    likes: 856,
-    retweets: 142,
-    replies: 31,
-    views: '18.9K',
-    isLiked: true,
-    isRetweeted: false,
-    isBookmarked: true,
-  },
-  {
-    id: 3,
-    author: {
-      fullName: 'Design Daily',
-      username: 'designdaily',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      verified: false,
-    },
-    createdAt: '6h',
-    content: 'Dark mode user interfaces require careful contrast calibration. Pure black (#000000) combined with subtle electric blue accents creates a sleek, high-premium aesthetic.',
-    likes: 420,
-    retweets: 88,
-    replies: 12,
-    views: '9.4K',
-    isLiked: false,
-    isRetweeted: false,
-    isBookmarked: false,
-  },
-];
+import api from '../../utils/axiosApi.util';
 
 const Home = () => {
   const { user } = useAuth();
   const { showToast } = useOutletContext() || {};
   const [activeTab, setActiveTab] = useState('forYou');
-  const [posts, setPosts] = useState(INITIAL_POSTS);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Initial feed loading simulation
-  useEffect(() => {
-    const timer = setTimeout(() => {
+  // Fetch "For You" Feed from API
+  const fetchFeed = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/tweets/feed/for-you');
+      const feedData = res?.data?.data || [];
+      setPosts(feedData);
+    } catch (error) {
+      if (showToast) showToast(error?.response?.data?.message || 'Failed to load feed');
+      setPosts([]);
+    } finally {
       setLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [showToast]);
+
+  useEffect(() => {
+    fetchFeed();
+  }, [fetchFeed]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 400);
+    fetchFeed();
   };
 
-  const handlePostCreate = (text) => {
-    const newPost = {
-      id: Date.now(),
-      author: {
-        fullName: user?.fullName || 'Anonymous User',
-        username: user?.username || 'user',
-        avatar: user?.avatar || '',
-        verified: user?.isVerified || false,
-      },
-      createdAt: 'Just now',
-      content: text,
-      likes: 0,
-      retweets: 0,
-      replies: 0,
-      views: '1',
-      isLiked: false,
-      isRetweeted: false,
-      isBookmarked: false,
-    };
+  const handlePostCreate = async (text) => {
+    try {
+      const res = await api.post('/tweets/', { content: text });
+      const createdTweet = res?.data?.data;
 
-    setPosts([newPost, ...posts]);
-    if (showToast) showToast('Your post was sent!');
+      // Format newly created tweet for immediate display in stream
+      const newPost = {
+        ...createdTweet,
+        owner: {
+          _id: user?._id,
+          fullName: user?.fullName,
+          username: user?.username,
+          avatar: user?.avatar,
+          isVerified: user?.isVerified,
+        },
+        likes: 0,
+        retweets: 0,
+        replies: 0,
+        views: 1,
+        isLiked: false,
+        isRetweeted: false,
+        isBookmarked: false,
+      };
+
+      setPosts((prev) => [newPost, ...(prev || [])]);
+      if (showToast) showToast('Your post was sent!');
+    } catch (error) {
+      if (showToast) showToast(error?.response?.data?.message || 'Failed to send post');
+    }
   };
 
   return (
@@ -119,6 +76,7 @@ const Home = () => {
         posts={posts}
         setPosts={setPosts}
         loading={loading}
+        emptyMessage="No posts in your feed yet. Be the first to share a post!"
       />
     </main>
   );
