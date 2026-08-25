@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useOutletContext } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
+import { usePost } from '../../context/PostContext';
 import FeedHeader from '../layout/FeedHeader';
 import PostComposer from '../post/PostComposer';
 import PostList from '../post/PostList';
@@ -66,6 +67,7 @@ const INITIAL_POSTS = [
 
 const Home = () => {
   const { user } = useAuth();
+  const { toggleLike, toggleRetweet, toggleBookmark, sharePost } = usePost();
   const { showToast } = useOutletContext() || {};
   const [activeTab, setActiveTab] = useState('forYou');
   const [posts, setPosts] = useState(INITIAL_POSTS);
@@ -111,55 +113,6 @@ const Home = () => {
     if (showToast) showToast('Your post was sent!');
   };
 
-  const handleLike = (postId) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          const isLiked = !post.isLiked;
-          return {
-            ...post,
-            isLiked,
-            likes: isLiked ? post.likes + 1 : post.likes - 1,
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleRetweet = (postId) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          const isRetweeted = !post.isRetweeted;
-          return {
-            ...post,
-            isRetweeted,
-            retweets: isRetweeted ? post.retweets + 1 : post.retweets - 1,
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleBookmark = (postId) => {
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId) {
-          const isBookmarked = !post.isBookmarked;
-          if (showToast) showToast(isBookmarked ? 'Added to your Bookmarks' : 'Removed from Bookmarks');
-          return { ...post, isBookmarked };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleShare = () => {
-    if (showToast) showToast('Post link copied to clipboard!');
-  };
-
   return (
     <main className="w-full max-w-150 border-r border-[#2f3336] min-h-screen">
       <FeedHeader activeTab={activeTab} setActiveTab={handleTabChange} />
@@ -167,10 +120,10 @@ const Home = () => {
       <PostList
         posts={posts}
         loading={loading}
-        onLike={handleLike}
-        onRetweet={handleRetweet}
-        onBookmark={handleBookmark}
-        onShare={handleShare}
+        onLike={(id) => toggleLike(id, posts, setPosts)}
+        onRetweet={(id) => toggleRetweet(id, posts, setPosts, showToast)}
+        onBookmark={(id) => toggleBookmark(id, posts, setPosts, showToast)}
+        onShare={(id) => sharePost(id, showToast)}
       />
     </main>
   );

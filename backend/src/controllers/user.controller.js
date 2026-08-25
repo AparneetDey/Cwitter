@@ -545,7 +545,9 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
                 owner: {
                     _id: "$owner._id",
                     fullName: "$owner.fullName",
-                    avatar: "$owner.avatar"
+                    username: "$owner.username",
+                    avatar: "$owner.avatar",
+                    isVerified: "$owner.isVerified"
                 }
             }
         }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link, NavLink, useNavigate } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
 import CwitterLogo from '../../elements/CwitterLogo';
 import {
@@ -38,10 +38,14 @@ const Sidebar = () => {
 
         {/* Navigation Links */}
         <nav className="flex flex-col gap-1">
-          <Link to="/" className="cwitter-nav-link-active">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) => (isActive ? 'cwitter-nav-link-active' : 'cwitter-nav-link')}
+          >
             <HomeIcon className="w-7 h-7" />
             <span className="hidden xl:inline text-xl">Home</span>
-          </Link>
+          </NavLink>
           
           <a href="#" className="cwitter-nav-link">
             <Compass className="w-7 h-7" />
@@ -61,15 +65,21 @@ const Sidebar = () => {
             <span className="hidden xl:inline text-xl font-medium">Messages</span>
           </a>
 
-          <a href="#" className="cwitter-nav-link">
+          <NavLink
+            to="/bookmarks"
+            className={({ isActive }) => (isActive ? 'cwitter-nav-link-active' : 'cwitter-nav-link')}
+          >
             <Bookmark className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">Bookmarks</span>
-          </a>
+          </NavLink>
 
-          <Link to={`/profile/${user._id}`} className="cwitter-nav-link">
+          <NavLink
+            to={`/profile/${user._id}`}
+            className={({ isActive }) => (isActive ? 'cwitter-nav-link-active' : 'cwitter-nav-link')}
+          >
             <UserIcon className="w-7 h-7" />
             <span className="hidden xl:inline text-xl font-medium">Profile</span>
-          </Link>
+          </NavLink>
 
           <a href="#" className="cwitter-nav-link">
             <MoreHorizontal className="w-7 h-7" />

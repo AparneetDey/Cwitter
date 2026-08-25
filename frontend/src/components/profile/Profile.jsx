@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useOutletContext, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../../context/AuthContext';
+import { usePost } from '../../context/PostContext';
 import PostList from '../post/PostList';
 import UserList from './UserList';
 import UserListSkeleton from './UserListSkeleton';
@@ -23,6 +24,7 @@ import useFormatter from '../../hooks/useFormatter';
 const Profile = () => {
   const { userId } = useParams();
   const { user: currentUser } = useAuth();
+  const { toggleLike, toggleRetweet, toggleBookmark, sharePost } = usePost();
   const { showToast } = useOutletContext() || {};
   const { formatDate, formatNumber } = useFormatter();
   const navigate = useNavigate();
@@ -221,58 +223,6 @@ const Profile = () => {
     }
   };
 
-  const handleLike = (postId) => {
-    if (!posts) return;
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId || post._id === postId) {
-          const isLiked = !post.isLiked;
-          return {
-            ...post,
-            isLiked,
-            likes: isLiked ? post.likes + 1 : post.likes - 1,
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleRetweet = (postId) => {
-    if (!posts) return;
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId || post._id === postId) {
-          const isRetweeted = !post.isRetweeted;
-          return {
-            ...post,
-            isRetweeted,
-            retweets: isRetweeted ? post.retweets + 1 : post.retweets - 1,
-          };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleBookmark = (postId) => {
-    if (!posts) return;
-    setPosts(
-      posts.map((post) => {
-        if (post.id === postId || post._id === postId) {
-          const isBookmarked = !post.isBookmarked;
-          triggerToast(isBookmarked ? 'Added to your Bookmarks' : 'Removed from Bookmarks');
-          return { ...post, isBookmarked };
-        }
-        return post;
-      })
-    );
-  };
-
-  const handleShare = () => {
-    triggerToast('Post link copied to clipboard!');
-  };
-
   // Render tab stream content cleanly
   const renderTabContent = () => {
     if (tabLoading) {
@@ -303,10 +253,10 @@ const Profile = () => {
         return (
           <PostList
             posts={posts}
-            onLike={handleLike}
-            onRetweet={handleRetweet}
-            onBookmark={handleBookmark}
-            onShare={handleShare}
+            onLike={(id) => toggleLike(id, posts, setPosts)}
+            onRetweet={(id) => toggleRetweet(id, posts, setPosts, showToast)}
+            onBookmark={(id) => toggleBookmark(id, posts, setPosts, showToast)}
+            onShare={(id) => sharePost(id, showToast)}
           />
         );
       default:
