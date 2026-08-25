@@ -211,6 +211,62 @@ const getCurrentUser = asyncHandler(async (req, res) => {
         )
 })
 
+const getSearchUsers = asyncHandler(async (req, res) => {
+    const {page = 1, limit = 30, searchQuery} = req.query;
+
+    if(!searchQuery) throw new ApiError(400, "Search query is required");
+
+    const pipeline = [
+        {
+            $match: {
+                $or: [
+                    {
+                        fullName: {
+                            $regex: searchQuery,
+                            $options: "i"
+                        },
+                    },
+                    {
+                        username: {
+                            $regex: searchQuery,
+                            $options: "i"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $project: {
+                username: 1,
+                fullName: 1,
+                avatar: 1,
+                isVerified: 1
+            }
+        }
+    ]
+
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "users",
+            totalDocs: "totalUsers"
+        }
+    }
+
+    const users = await User.aggregatePaginate(User.aggregate(pipeline), paginateOptions)
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            users,
+            "Searched user fetched successfully"
+        )
+    )
+})
+
 const getUserDashboard = asyncHandler(async (req, res) => {
     const {userId} = req.params;
 
@@ -592,6 +648,7 @@ export {
     logOutUser,
     refreshAccessToken,
     getCurrentUser,
+    getSearchUsers,
     getUserDashboard,
     updateUserAvatar,
     updateUserCoverImage,
