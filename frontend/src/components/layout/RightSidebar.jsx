@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search } from 'lucide-react';
+import SearchBar from '../widgets/SearchBar';
 import TrendingWidget from '../widgets/TrendingWidget';
 import WhoToFollowWidget from '../widgets/WhoToFollowWidget';
 
@@ -7,15 +7,8 @@ const RightSidebar = ({ trends, whoToFollow, onToggleFollow }) => {
   return (
     <aside className="hidden lg:flex flex-col gap-4 w-80 xl:w-90 p-4 sticky top-0 h-screen overflow-y-auto select-none shrink-0">
       
-      {/* Search Input */}
-      <div className="relative">
-        <Search className="absolute left-4 top-3.5 w-4 h-4 text-gray-500" />
-        <input
-          type="text"
-          placeholder="Search Cwitter"
-          className="w-full bg-[#202327] text-white placeholder-gray-500 rounded-full pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-[#1d9bf0] focus:ring-1 focus:ring-[#1d9bf0] border border-transparent transition-all"
-        />
-      </div>
+      {/* Reusable Search Bar Component */}
+      <SearchBar />
 
       {/* Subscribe to Premium Banner */}
       <div className="bg-[#16181c] border border-[#2f3336] rounded-2xl p-4 flex flex-col gap-2">

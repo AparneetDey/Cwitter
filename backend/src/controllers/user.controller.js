@@ -212,9 +212,22 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 })
 
 const getSearchUsers = asyncHandler(async (req, res) => {
-    const {page = 1, limit = 30, searchQuery} = req.query;
+    const { page = 1, limit = 30 } = req.query;
+    const rawQuery = req.query.searchQuery || req.query.query || req.query.q || "";
+    const searchQuery = rawQuery.trim();
 
-    if(!searchQuery) throw new ApiError(400, "Search query is required");
+    if (!searchQuery) {
+        return res.status(200).json(
+            new ApiResponse(
+                200,
+                { users: [], totalUsers: 0, page: Number(page), limit: Number(limit), totalPages: 0 },
+                "Search query empty"
+            )
+        );
+    }
+
+    // Escape special regex characters to prevent syntax errors
+    const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     const pipeline = [
         {
@@ -222,13 +235,13 @@ const getSearchUsers = asyncHandler(async (req, res) => {
                 $or: [
                     {
                         fullName: {
-                            $regex: searchQuery,
+                            $regex: escapedQuery,
                             $options: "i"
                         },
                     },
                     {
                         username: {
-                            $regex: searchQuery,
+                            $regex: escapedQuery,
                             $options: "i"
                         }
                     }
@@ -237,13 +250,15 @@ const getSearchUsers = asyncHandler(async (req, res) => {
         },
         {
             $project: {
+                _id: 1,
                 username: 1,
                 fullName: 1,
                 avatar: 1,
-                isVerified: 1
+                isVerified: 1,
+                description: 1
             }
         }
-    ]
+    ];
 
     const paginateOptions = {
         page,
@@ -252,9 +267,9 @@ const getSearchUsers = asyncHandler(async (req, res) => {
             docs: "users",
             totalDocs: "totalUsers"
         }
-    }
+    };
 
-    const users = await User.aggregatePaginate(User.aggregate(pipeline), paginateOptions)
+    const users = await User.aggregatePaginate(User.aggregate(pipeline), paginateOptions);
 
     res
     .status(200)
@@ -264,8 +279,8 @@ const getSearchUsers = asyncHandler(async (req, res) => {
             users,
             "Searched user fetched successfully"
         )
-    )
-})
+    );
+});
 
 const getUserDashboard = asyncHandler(async (req, res) => {
     const {userId} = req.params;
