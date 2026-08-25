@@ -74,7 +74,7 @@ const getUserFollowers = asyncHandler(async (req, res) => {
             $lookup: {
                 from: "follows",
                 let: {
-                    followerId: "$follower._id"
+                    targetUserId: "$follower._id"
                 },
                 as: "followingBack",
                 pipeline: [
@@ -86,10 +86,12 @@ const getUserFollowers = asyncHandler(async (req, res) => {
                                         $eq: [
                                             "$follower",
                                             new mongoose.Types.ObjectId(req?.user?._id)
-                                        ],
+                                        ]
+                                    },
+                                    {
                                         $eq: [
                                             "$following",
-                                            "$followerId"
+                                            "$$targetUserId"
                                         ]
                                     }
                                 ]
@@ -184,7 +186,7 @@ const getUserFollowings = asyncHandler(async (req, res) => {
             $lookup: {
                 from: "follows",
                 let: {
-                    followerId: "$following._id"
+                    targetUserId: "$following._id"
                 },
                 as: "followingBack",
                 pipeline: [
@@ -196,10 +198,12 @@ const getUserFollowings = asyncHandler(async (req, res) => {
                                         $eq: [
                                             "$follower",
                                             new mongoose.Types.ObjectId(req?.user?._id)
-                                        ],
+                                        ]
+                                    },
+                                    {
                                         $eq: [
                                             "$following",
-                                            "$followerId"
+                                            "$$targetUserId"
                                         ]
                                     }
                                 ]
@@ -249,7 +253,7 @@ const getUserFollowings = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             followings,
-            "User followers fetched successfully"
+            "User followings fetched successfully"
         )
     )
 })
