@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Camera, Loader2, AlertCircle, Mail, User as UserIcon, AtSign, FileText, Image as ImageIcon, MapPin, Upload } from 'lucide-react';
+import { X, Camera, Loader2, AlertCircle, Mail, User as UserIcon, AtSign, FileText, Image as ImageIcon, MapPin, Upload, Lock } from 'lucide-react';
 import api from '../../utils/axiosApi.util';
 import { useAuth } from '../../context/AuthContext';
 import { getAvatarUrl } from '../../utils/constants';
@@ -11,7 +11,7 @@ const GithubIcon = ({ className = "w-4 h-4" }) => (
   </svg>
 );
 
-const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
+const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated, onOpenPasswordModal, showToast }) => {
   const { setUser } = useAuth();
 
   const avatarInputRef = useRef(null);
@@ -67,7 +67,6 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
       }
     } catch (err) {
       console.warn("ImageKit upload failed, falling back to local file preview:", err);
-      // Fallback preview
       const reader = new FileReader();
       reader.onload = () => {
         setFormData((prev) => ({ ...prev, avatar: reader.result }));
@@ -97,7 +96,6 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
       }
     } catch (err) {
       console.warn("ImageKit upload failed, falling back to local file preview:", err);
-      // Fallback preview
       const reader = new FileReader();
       reader.onload = () => {
         setFormData((prev) => ({ ...prev, coverImage: reader.result }));
@@ -400,6 +398,26 @@ const EditProfileModal = ({ isOpen, onClose, user, onProfileUpdated }) => {
                 placeholder="github.com/username"
                 className="cwitter-input !px-4 !py-3 !text-sm"
               />
+            </div>
+
+            {/* Security & Password Button */}
+            <div className="pt-4 border-t border-[#2f3336]">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  if (onOpenPasswordModal) {
+                    onOpenPasswordModal();
+                  }
+                }}
+                className="w-full bg-[#16181c] hover:bg-[#202327] border border-[#2f3336] text-white font-bold py-3.5 px-4 rounded-2xl transition-all text-sm cursor-pointer flex items-center justify-between group"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <Lock className="w-4 h-4 text-[#1d9bf0]" />
+                  <span>Change Account Password</span>
+                </div>
+                <span className="text-xs text-[#1d9bf0] group-hover:underline">Update &rarr;</span>
+              </button>
             </div>
 
           </form>

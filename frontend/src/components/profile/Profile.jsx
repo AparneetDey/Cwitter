@@ -5,6 +5,7 @@ import PostList from '../post/PostList';
 import UserList from './UserList';
 import UserListSkeleton from './UserListSkeleton';
 import EditProfileModal from './EditProfileModal';
+import ChangePasswordModal from './ChangePasswordModal';
 import VerificationModal from './VerificationModal';
 import ProfileSkeleton from './ProfileSkeleton';
 import {
@@ -30,6 +31,7 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState('posts');
   const [tabLoading, setTabLoading] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   
   const [user, setUser] = useState(null);
@@ -269,11 +271,20 @@ const Profile = () => {
 
   return (
     <>
+      {/* Change Password Modal */}
+      <ChangePasswordModal
+        isOpen={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        showToast={triggerToast}
+      />
+
       {/* Edit Profile Modal */}
       <EditProfileModal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         user={user}
+        showToast={triggerToast}
+        onOpenPasswordModal={() => setIsPasswordModalOpen(true)}
         onProfileUpdated={() => {
           getUserDashboard();
           triggerToast('Profile updated successfully!');

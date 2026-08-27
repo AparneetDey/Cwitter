@@ -250,6 +250,11 @@ const getUserTweets = asyncHandler(async (req, res) => {
             }
         },
         {
+            $sort: {
+                createdAt: -1
+            }
+        },
+        {
             $project: {
                 retweets: 0
             }
@@ -307,6 +312,12 @@ const getUserFeed = asyncHandler(async (req, res) => {
                 },
                 owner: {
                     $first: "$owner"
+                },
+                isRetweeted: {
+                    $in: [
+                        req?.user?._id,
+                        "$retweets"
+                    ]
                 }
             }
         },

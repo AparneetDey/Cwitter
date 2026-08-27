@@ -19,6 +19,7 @@ const Home = () => {
     try {
       const res = await api.get('/tweets/feed/for-you');
       const feedData = res?.data?.data || [];
+      console.log(feedData)
       setPosts(feedData);
     } catch (error) {
       if (showToast) showToast(error?.response?.data?.message || 'Failed to load feed');
