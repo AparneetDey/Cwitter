@@ -36,6 +36,25 @@ export const PostProvider = ({ children }) => {
     }
   }, [refreshFeed]);
 
+  // Delete Post Action in Context
+  const deletePost = useCallback(async (postId, setPosts, showToast) => {
+    if (setPosts) {
+      setPosts((prevPosts) =>
+        prevPosts
+          ? prevPosts.filter((post) => String(post._id || post.id) !== String(postId))
+          : prevPosts
+      );
+    }
+
+    try {
+      const res = await api.delete(`/tweets/delete/${postId}`);
+      triggerToast(showToast, res?.data?.message || 'Post deleted successfully');
+      refreshFeed();
+    } catch (error) {
+      triggerToast(showToast, error?.response?.data?.message || 'Failed to delete post');
+    }
+  }, [refreshFeed]);
+
   // Toggle Like Action
   const toggleLike = useCallback((postId, setPosts) => {
     if (!setPosts) return;
@@ -136,6 +155,7 @@ export const PostProvider = ({ children }) => {
     feedRefreshKey,
     refreshFeed,
     createPost,
+    deletePost,
     toggleLike,
     toggleRetweet,
     toggleBookmark,

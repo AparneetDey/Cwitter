@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useOutletContext } from 'react-router';
 import { getAvatarUrl } from '../../utils/constants';
 import { usePost } from '../../context/PostContext';
+import { useAuth } from '../../context/AuthContext';
 import {
   Heart,
   Repeat2,
@@ -10,16 +11,36 @@ import {
   Bookmark,
   BarChart2,
   CheckCircle2,
-  MoreHorizontal
+  MoreHorizontal,
+  Trash2
 } from 'lucide-react';
 import useFormatter from '../../hooks/useFormatter';
 
 const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
-  const { toggleLike, toggleRetweet, toggleBookmark, sharePost } = usePost();
+  const { user: currentUser } = useAuth();
+  const { toggleLike, toggleRetweet, toggleBookmark, sharePost, deletePost } = usePost();
   const { showToast } = useOutletContext() || {};
   const { formatNumber, formatTimeAgo } = useFormatter();
 
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
   const postId = post?._id || post?.id;
+  const ownerId = post?.owner?._id || post?.owner || post?.author?._id;
+  const isOwner = currentUser?._id && String(currentUser._id) === String(ownerId);
+
+  // Close dropdown menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
 
   const handleLikeClick = (e) => {
     e.stopPropagation();
@@ -45,8 +66,14 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
     sharePost(postId, showToast);
   };
 
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    setShowMenu(false);
+    deletePost(postId, setPosts, showToast);
+  };
+
   return (
-    <article className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer">
+    <article className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer relative">
       {/* Owner Avatar */}
       <img
         src={getAvatarUrl(post?.owner?.avatar || post?.author?.avatar)}
@@ -55,30 +82,68 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
       />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col gap-2">
+      <div className="flex-1 flex flex-col gap-2 min-w-0">
         
         {/* Owner Meta Header */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1.5 text-sm">
-            <span className="font-bold text-white hover:underline">
+          <div className="flex items-center space-x-1.5 text-sm truncate">
+            <span className="font-bold text-white hover:underline truncate">
               {post?.owner?.fullName || post?.author?.fullName}
             </span>
             {(post?.owner?.isVerified || post?.author?.verified) && (
-              <CheckCircle2 className="w-4 h-4 text-[#1d9bf0]" />
+              <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] shrink-0" />
             )}
-            <span className="text-gray-500">
+            <span className="text-gray-500 truncate">
               @{post?.owner?.username || post?.author?.username}
             </span>
             <span className="text-gray-500">·</span>
-            <span className="text-gray-500">
+            <span className="text-gray-500 shrink-0">
               {formatTimeAgo(post?.createdAt)}
             </span>
           </div>
-          <MoreHorizontal className="w-4 h-4 text-gray-500 hover:text-white" />
+
+          {/* Options Menu Button & Dropdown */}
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowMenu(!showMenu);
+              }}
+              className="p-1.5 rounded-full hover:bg-[#181818] text-gray-500 hover:text-white transition-colors cursor-pointer"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 top-full mt-1 w-44 bg-[#16181c] border border-[#2f3336] rounded-2xl shadow-2xl overflow-hidden z-50 animate-fade-in py-1">
+                {isOwner ? (
+                  <button
+                    onClick={handleDeleteClick}
+                    className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-950/40 transition-colors text-left cursor-pointer"
+                  >
+                    <Trash2 className="w-4 h-4 text-red-400" />
+                    <span>Delete Post</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowMenu(false);
+                      handleShareClick(e);
+                    }}
+                    className="w-full flex items-center space-x-2.5 px-4 py-2.5 text-xs font-semibold text-gray-300 hover:bg-[#202327] transition-colors text-left cursor-pointer"
+                  >
+                    <Share className="w-4 h-4 text-gray-400" />
+                    <span>Share Post</span>
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Post Text */}
-        <p className="text-[#e7e9ea] text-[15px] leading-normal whitespace-pre-line">
+        <p className="text-[#e7e9ea] text-[15px] leading-normal whitespace-pre-line break-words">
           {post?.content}
         </p>
 
