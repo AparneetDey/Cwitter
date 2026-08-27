@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useOutletContext } from 'react-router';
 import { X, Image as ImageIcon, Smile, BarChart2, Calendar, MapPin, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { usePost } from '../../context/PostContext';
 import { getAvatarUrl } from '../../utils/constants';
-import api from '../../utils/axiosApi.util';
 
-const PostCreateModal = ({ isOpen, onClose, onPostCreated, showToast }) => {
+const PostCreateModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();
+  const { createPost } = usePost();
+  const { showToast } = useOutletContext() || {};
   const [postText, setPostText] = useState('');
   const [loading, setLoading] = useState(false);
   const textareaRef = useRef(null);
@@ -39,34 +42,11 @@ const PostCreateModal = ({ isOpen, onClose, onPostCreated, showToast }) => {
 
     setLoading(true);
     try {
-      const res = await api.post('/tweets/', { content: postText.trim() });
-      const createdTweet = res?.data?.data;
-
-      const formattedPost = {
-        ...createdTweet,
-        owner: {
-          _id: user?._id,
-          fullName: user?.fullName,
-          username: user?.username,
-          avatar: user?.avatar,
-          isVerified: user?.isVerified,
-        },
-        likes: 0,
-        retweets: 0,
-        replies: 0,
-        views: 1,
-        isLiked: false,
-        isRetweeted: false,
-        isBookmarked: false,
-      };
-
-      if (showToast) showToast('Your post was sent!');
-      if (onPostCreated) onPostCreated(formattedPost);
-
+      await createPost(postText.trim(), showToast);
       setPostText('');
       onClose();
     } catch (error) {
-      if (showToast) showToast(error?.response?.data?.message || 'Failed to create post');
+      console.error(error);
     } finally {
       setLoading(false);
     }

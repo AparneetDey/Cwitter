@@ -1,16 +1,42 @@
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 import api from '../utils/axiosApi.util';
 
 const PostContext = createContext(null);
 
 export const PostProvider = ({ children }) => {
+  const [feedRefreshKey, setFeedRefreshKey] = useState(0);
+
   const triggerToast = (showToast, message) => {
     if (showToast && typeof showToast === 'function') {
       showToast(message);
     }
   };
 
-  // Toggle Like (handles local state mutation if setPosts supplied or optimistic toggle)
+  // Signal home feed / stream refresh
+  const refreshFeed = useCallback(() => {
+    setFeedRefreshKey((prev) => prev + 1);
+  }, []);
+
+  // Create Post Action in Context
+  const createPost = useCallback(async (content, showToast) => {
+    if (!content || !content.trim()) return null;
+
+    try {
+      const res = await api.post('/tweets/', { content: content.trim() });
+      const createdTweet = res?.data?.data;
+      triggerToast(showToast, 'Your post was sent!');
+
+      // Automatically refresh the home feed
+      refreshFeed();
+
+      return createdTweet;
+    } catch (error) {
+      triggerToast(showToast, error?.response?.data?.message || 'Failed to create post');
+      throw error;
+    }
+  }, [refreshFeed]);
+
+  // Toggle Like Action
   const toggleLike = useCallback((postId, setPosts) => {
     if (!setPosts) return;
 
@@ -32,7 +58,7 @@ export const PostProvider = ({ children }) => {
     );
   }, []);
 
-  // Toggle Retweet (optimistic state toggle + API endpoint trigger)
+  // Toggle Retweet Action (optimistic state toggle + API endpoint trigger)
   const toggleRetweet = useCallback(async (postId, setPosts, showToast) => {
     let nextRetweetedState = false;
 
@@ -65,7 +91,7 @@ export const PostProvider = ({ children }) => {
     }
   }, []);
 
-  // Toggle Bookmark (optimistic state toggle + API endpoint trigger)
+  // Toggle Bookmark Action (optimistic state toggle + API endpoint trigger)
   const toggleBookmark = useCallback(async (postId, setPosts, showToast) => {
     let nextBookmarkedState = false;
 
@@ -107,6 +133,9 @@ export const PostProvider = ({ children }) => {
   }, []);
 
   const value = {
+    feedRefreshKey,
+    refreshFeed,
+    createPost,
     toggleLike,
     toggleRetweet,
     toggleBookmark,
