@@ -36,6 +36,34 @@ export const PostProvider = ({ children }) => {
     }
   }, [refreshFeed]);
 
+  // Edit Post Action in Context
+  const editPost = useCallback(async (postId, newContent, setPosts, showToast) => {
+    if (!newContent || !newContent.trim()) return;
+
+    if (setPosts) {
+      setPosts((prevPosts) =>
+        prevPosts
+          ? prevPosts.map((post) => {
+              const id = post._id || post.id;
+              if (String(id) === String(postId)) {
+                return { ...post, content: newContent.trim() };
+              }
+              return post;
+            })
+          : prevPosts
+      );
+    }
+
+    try {
+      const res = await api.patch(`/tweets/edit/${postId}`, { content: newContent.trim() });
+      triggerToast(showToast, res?.data?.message || 'Post updated successfully!');
+      refreshFeed();
+    } catch (error) {
+      triggerToast(showToast, error?.response?.data?.message || 'Failed to edit post');
+      throw error;
+    }
+  }, [refreshFeed]);
+
   // Delete Post Action in Context
   const deletePost = useCallback(async (postId, setPosts, showToast) => {
     if (setPosts) {
@@ -155,6 +183,7 @@ export const PostProvider = ({ children }) => {
     feedRefreshKey,
     refreshFeed,
     createPost,
+    editPost,
     deletePost,
     toggleLike,
     toggleRetweet,
