@@ -45,6 +45,15 @@ const deleteAMedia = asyncHandler(async (req, res) => {
 
     if(!deletedResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting the media");
 
+    await Tweet.updateMany(
+        { tweet: tweetId },
+        {
+            $pull: {
+                media: mediaId
+            }
+        }
+    );
+
     res
     .status(200)
     .json(
