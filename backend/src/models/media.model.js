@@ -1,4 +1,4 @@
-import { Schema } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 
 const mediaSchema = new Schema(
     {
@@ -21,3 +21,9 @@ const mediaSchema = new Schema(
         timestamps: true
     }
 )
+
+mediaSchema.methods.isOwner = function(userId) {
+    return this.owner.equals(userId);
+}
+
+export const Media = mongoose.model("Media", mediaSchema);
