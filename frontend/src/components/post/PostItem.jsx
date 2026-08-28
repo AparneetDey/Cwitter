@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useOutletContext } from 'react-router';
+import { useOutletContext, useNavigate } from 'react-router';
 import { getAvatarUrl } from '../../utils/constants';
 import { usePost } from '../../context/PostContext';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +19,7 @@ import {
 import useFormatter from '../../hooks/useFormatter';
 
 const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
+  const navigate = useNavigate();
   const { user: currentUser } = useAuth();
   const { toggleLike, toggleRetweet, toggleBookmark, sharePost, deletePost } = usePost();
   const { showToast } = useOutletContext() || {};
@@ -29,7 +30,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
   const menuRef = useRef(null);
 
   const postId = post?._id || post?.id;
-  const ownerId = post?.owner?._id || post?.owner || post?.author?._id;
+  const ownerId = post?.owner?._id || post?.owner || post?.author?._id || post?.author?.id;
   const isOwner = currentUser?._id && String(currentUser._id) === String(ownerId);
 
   // Close dropdown menu on click outside
@@ -44,6 +45,13 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMenu]);
+
+  const handleProfileClick = (e) => {
+    e.stopPropagation();
+    if (ownerId) {
+      navigate(`/profile/${ownerId}`);
+    }
+  };
 
   const handleLikeClick = (e) => {
     e.stopPropagation();
@@ -87,11 +95,12 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
       />
 
       <article className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer relative">
-        {/* Owner Avatar */}
+        {/* Owner Avatar (Navigates to Profile) */}
         <img
           src={getAvatarUrl(post?.owner?.avatar || post?.author?.avatar)}
           alt={post?.owner?.fullName || post?.author?.fullName}
-          className="w-11 h-11 rounded-full object-cover shrink-0 bg-[#16181c]"
+          onClick={handleProfileClick}
+          className="w-11 h-11 rounded-full object-cover shrink-0 bg-[#16181c] cursor-pointer hover:opacity-80 transition-opacity"
         />
 
         {/* Main Content */}
@@ -100,13 +109,19 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
           {/* Owner Meta Header */}
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-1.5 text-sm truncate">
-              <span className="font-bold text-white hover:underline truncate">
+              <span
+                onClick={handleProfileClick}
+                className="font-bold text-white hover:underline truncate cursor-pointer"
+              >
                 {post?.owner?.fullName || post?.author?.fullName}
               </span>
               {(post?.owner?.isVerified || post?.author?.verified) && (
                 <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] shrink-0" />
               )}
-              <span className="text-gray-500 truncate">
+              <span
+                onClick={handleProfileClick}
+                className="text-gray-500 truncate cursor-pointer hover:underline"
+              >
                 @{post?.owner?.username || post?.author?.username}
               </span>
               <span className="text-gray-500">·</span>

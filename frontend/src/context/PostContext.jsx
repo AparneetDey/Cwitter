@@ -1,10 +1,14 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import api from '../utils/axiosApi.util';
+import { useAuth } from './AuthContext';
+import VerificationModal from '../components/profile/VerificationModal';
 
 const PostContext = createContext(null);
 
 export const PostProvider = ({ children }) => {
+  const { user } = useAuth();
   const [feedRefreshKey, setFeedRefreshKey] = useState(0);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
 
   const triggerToast = (showToast, message) => {
     if (showToast && typeof showToast === 'function') {
@@ -12,33 +16,56 @@ export const PostProvider = ({ children }) => {
     }
   };
 
+  const openVerificationModal = useCallback(() => {
+    setIsVerificationModalOpen(true);
+  }, []);
+
+  const closeVerificationModal = useCallback(() => {
+    setIsVerificationModalOpen(false);
+  }, []);
+
   // Signal home feed / stream refresh
   const refreshFeed = useCallback(() => {
     setFeedRefreshKey((prev) => prev + 1);
   }, []);
 
-  // Create Post Action in Context
+  // Create Post Action in Context (Checks isVerified & handles 401 unverified error)
   const createPost = useCallback(async (content, showToast) => {
     if (!content || !content.trim()) return null;
+
+    if (!user?.isVerified) {
+      triggerToast(showToast, 'Account verification required to create posts.');
+      openVerificationModal();
+      return null;
+    }
 
     try {
       const res = await api.post('/tweets/', { content: content.trim() });
       const createdTweet = res?.data?.data;
       triggerToast(showToast, 'Your post was sent!');
-
-      // Automatically refresh the home feed
       refreshFeed();
-
       return createdTweet;
     } catch (error) {
-      triggerToast(showToast, error?.response?.data?.message || 'Failed to create post');
+      const msg = error?.response?.data?.message || 'Failed to create post';
+      if (msg.includes('not verified') || error?.response?.status === 401) {
+        triggerToast(showToast, 'Account verification required to create posts.');
+        openVerificationModal();
+      } else {
+        triggerToast(showToast, msg);
+      }
       throw error;
     }
-  }, [refreshFeed]);
+  }, [user, openVerificationModal, refreshFeed]);
 
   // Edit Post Action in Context
   const editPost = useCallback(async (postId, newContent, setPosts, showToast) => {
     if (!newContent || !newContent.trim()) return;
+
+    if (!user?.isVerified) {
+      triggerToast(showToast, 'Account verification required to edit posts.');
+      openVerificationModal();
+      return;
+    }
 
     if (setPosts) {
       setPosts((prevPosts) =>
@@ -59,13 +86,25 @@ export const PostProvider = ({ children }) => {
       triggerToast(showToast, res?.data?.message || 'Post updated successfully!');
       refreshFeed();
     } catch (error) {
-      triggerToast(showToast, error?.response?.data?.message || 'Failed to edit post');
+      const msg = error?.response?.data?.message || 'Failed to edit post';
+      if (msg.includes('not verified')) {
+        triggerToast(showToast, 'Account verification required to edit posts.');
+        openVerificationModal();
+      } else {
+        triggerToast(showToast, msg);
+      }
       throw error;
     }
-  }, [refreshFeed]);
+  }, [user, openVerificationModal, refreshFeed]);
 
   // Delete Post Action in Context
   const deletePost = useCallback(async (postId, setPosts, showToast) => {
+    if (!user?.isVerified) {
+      triggerToast(showToast, 'Account verification required to delete posts.');
+      openVerificationModal();
+      return;
+    }
+
     if (setPosts) {
       setPosts((prevPosts) =>
         prevPosts
@@ -79,9 +118,15 @@ export const PostProvider = ({ children }) => {
       triggerToast(showToast, res?.data?.message || 'Post deleted successfully');
       refreshFeed();
     } catch (error) {
-      triggerToast(showToast, error?.response?.data?.message || 'Failed to delete post');
+      const msg = error?.response?.data?.message || 'Failed to delete post';
+      if (msg.includes('not verified')) {
+        triggerToast(showToast, 'Account verification required to delete posts.');
+        openVerificationModal();
+      } else {
+        triggerToast(showToast, msg);
+      }
     }
-  }, [refreshFeed]);
+  }, [user, openVerificationModal, refreshFeed]);
 
   // Toggle Like Action
   const toggleLike = useCallback((postId, setPosts) => {
@@ -105,8 +150,14 @@ export const PostProvider = ({ children }) => {
     );
   }, []);
 
-  // Toggle Retweet Action (optimistic state toggle + API endpoint trigger)
+  // Toggle Retweet Action (optimistic state toggle + API endpoint trigger with isVerified check)
   const toggleRetweet = useCallback(async (postId, setPosts, showToast) => {
+    if (!user?.isVerified) {
+      triggerToast(showToast, 'Account verification required to retweet.');
+      openVerificationModal();
+      return;
+    }
+
     let nextRetweetedState = false;
 
     if (setPosts) {
@@ -134,9 +185,15 @@ export const PostProvider = ({ children }) => {
       const res = await api.get(`/tweets/retweet/${postId}`);
       triggerToast(showToast, res?.data?.message || (nextRetweetedState ? 'Retweeted' : 'Undo retweet'));
     } catch (error) {
-      triggerToast(showToast, error?.response?.data?.message || 'Failed to toggle retweet');
+      const msg = error?.response?.data?.message || 'Failed to toggle retweet';
+      if (msg.includes('not verified')) {
+        triggerToast(showToast, 'Account verification required to retweet.');
+        openVerificationModal();
+      } else {
+        triggerToast(showToast, msg);
+      }
     }
-  }, []);
+  }, [user, openVerificationModal]);
 
   // Toggle Bookmark Action (optimistic state toggle + API endpoint trigger)
   const toggleBookmark = useCallback(async (postId, setPosts, showToast) => {
@@ -189,9 +246,26 @@ export const PostProvider = ({ children }) => {
     toggleRetweet,
     toggleBookmark,
     sharePost,
+    isVerificationModalOpen,
+    openVerificationModal,
+    closeVerificationModal,
   };
 
-  return <PostContext.Provider value={value}>{children}</PostContext.Provider>;
+  return (
+    <PostContext.Provider value={value}>
+      {children}
+
+      {/* Global Account Verification Modal */}
+      <VerificationModal
+        isOpen={isVerificationModalOpen}
+        onClose={closeVerificationModal}
+        user={user}
+        onVerifiedSuccess={() => {
+          triggerToast(null, 'Account verified successfully! 🎉');
+        }}
+      />
+    </PostContext.Provider>
+  );
 };
 
 export default PostProvider;

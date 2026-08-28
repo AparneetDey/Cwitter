@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { usePost } from '../../context/PostContext';
 import { getAvatarUrl } from '../../utils/constants';
 import {
   Image as ImageIcon,
   Smile,
   BarChart2,
   Calendar,
-  MapPin
+  MapPin,
+  ShieldAlert
 } from 'lucide-react';
 
 const PostComposer = ({ onPostCreate }) => {
   const { user } = useAuth();
+  const { openVerificationModal } = usePost();
   const [postText, setPostText] = useState('');
 
   const handleSubmit = (e) => {
@@ -30,10 +33,27 @@ const PostComposer = ({ onPostCreate }) => {
       />
 
       <form onSubmit={handleSubmit} className="flex-1 flex flex-col gap-3">
+        {/* Verification Warning Notice for Unverified Accounts */}
+        {!user?.isVerified && (
+          <div className="p-2.5 bg-[#1d9bf0]/10 border border-[#1d9bf0]/30 rounded-xl flex items-center justify-between text-xs text-[#1d9bf0]">
+            <div className="flex items-center space-x-2">
+              <ShieldAlert className="w-4 h-4 shrink-0 text-[#1d9bf0]" />
+              <span>Verification required to post tweets on Cwitter.</span>
+            </div>
+            <button
+              type="button"
+              onClick={openVerificationModal}
+              className="font-bold underline hover:text-white transition-colors cursor-pointer shrink-0 ml-2"
+            >
+              Verify Now &rarr;
+            </button>
+          </div>
+        )}
+
         <textarea
           value={postText}
           onChange={(e) => setPostText(e.target.value)}
-          placeholder="What is happening?!"
+          placeholder={user?.isVerified ? "What is happening?!" : "Verify your account to post on Cwitter..."}
           rows="3"
           className="w-full bg-transparent text-white placeholder-gray-500 text-lg resize-none focus:outline-none"
         ></textarea>

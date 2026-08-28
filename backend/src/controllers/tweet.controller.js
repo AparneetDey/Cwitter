@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Tweet } from "../models/tweet.model.js";
 import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
+import { deleteTweetMedia } from "./media.controller.js";
 
 const createATweet = asyncHandler(async (req, res) => {
     const {content, media = []} = req.body;
@@ -40,6 +41,8 @@ const deleteATweet = asyncHandler(async (req, res) => {
     if(!storedTweet) throw new ApiError(404, "Tweet does not exist");
 
     if(!storedTweet.isOwner(req?.user?._id)) throw new ApiError(401, "Unauthorized Action");
+
+    await deleteTweetMedia(req, res);
 
     const tweetDeleteResponse = await Tweet.deleteOne({_id: tweetId});
 
@@ -107,6 +110,25 @@ const getATweet = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                            isVerified: 1,
+                            bookmarks: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
             $addFields: {
                 isRetweeted: {
                     $in: [
@@ -116,12 +138,21 @@ const getATweet = asyncHandler(async (req, res) => {
                 },
                 totalRetweets: {
                     $size: "$retweets"
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isBookmarked: {
+                    $in: [
+                        "$_id",
+                        req?.user?.bookmarks
+                    ]
                 }
             }
         },
         {
             $project: {
-                retweets: 0
+                retweets: 0,
             }
         }
     ]);
@@ -227,7 +258,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
                             username: 1,
                             fullName: 1,
                             avatar: 1,
-                            isVerified: 1
+                            isVerified: 1,
                         }
                     }
                 ]
@@ -246,6 +277,12 @@ const getUserTweets = asyncHandler(async (req, res) => {
                 },
                 owner: {
                     $first: "$owner"
+                },
+                isBookmarked: {
+                    $in: [
+                        "$_id",
+                        req?.user?.bookmarks
+                    ]
                 }
             }
         },
@@ -256,7 +293,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                retweets: 0
+                retweets: 0,
             }
         }
     ]
@@ -299,7 +336,8 @@ const getUserFeed = asyncHandler(async (req, res) => {
                             username: 1,
                             fullName: 1,
                             avatar: 1,
-                            isVerified: 1
+                            isVerified: 1,
+                            bookmarks: 1
                         }
                     }
                 ]
@@ -310,13 +348,19 @@ const getUserFeed = asyncHandler(async (req, res) => {
                 totalRetweets: {
                     $size: "$retweets"
                 },
-                owner: {
-                    $first: "$owner"
-                },
                 isRetweeted: {
                     $in: [
                         req?.user?._id,
                         "$retweets"
+                    ]
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isBookmarked: {
+                    $in: [
+                        "$_id",
+                        req?.user?.bookmarks
                     ]
                 }
             }
@@ -329,7 +373,7 @@ const getUserFeed = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                retweets: 0
+                retweets: 0,
             }
         }
     ])

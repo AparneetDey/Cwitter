@@ -27,15 +27,17 @@ import imagekitRouter from "./routes/imagekit.route.js";
 import userRouter from "./routes/user.route.js";
 import tweetRouter from "./routes/tweet.route.js";
 import followRouter from "./routes/follow.route.js";
-import { errorHandler } from "./utils/errorHandler.js";
+import mediaRouter from "./routes/media.route.js";
 
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/imagekit", imagekitRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/tweets", tweetRouter);
 app.use("/api/v1/follows", followRouter);
+app.use("/api/v1/medias", mediaRouter);
 
 // Error handler middleware
+import { errorHandler } from "./utils/errorHandler.js";
 app.use(errorHandler)
 
 export { app }

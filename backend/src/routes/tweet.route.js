@@ -11,7 +11,7 @@ router.route("/").post(verifyUser, createATweet)
 router.route("/:tweetId").get(getATweet)
 router.route("/delete/:tweetId").delete(verifyUser, deleteATweet);
 router.route("/edit/:tweetId").patch(verifyUser, editATweet);
-router.route("/bookmark/:tweetId").get(verifyUser, addTweetToUserBookmark);
+router.route("/bookmark/:tweetId").get(addTweetToUserBookmark);
 router.route("/retweet/:tweetId").get(verifyUser, toggleRetweet);
 router.route("/user/:userId").get(getUserTweets);
 router.route("/feed/for-you").get(getUserFeed);
