@@ -181,13 +181,18 @@ const toggleTweetToUserBookmark = asyncHandler(async (req, res) => {
 
     const user = await User.findById(req?.user?._id);
 
-    if(user.bookmarks.find(t => t.equals(tweet._id))){
+    const isBookmarked = user.bookmarks.some((b) => String(b) === String(tweet._id));
+    let message = "";
+
+    if (isBookmarked) {
         user.bookmarks.pull(tweet._id);
+        message = "Removed from Bookmarks";
     } else {
         user.bookmarks.push(tweet._id);
+        message = "Added to Bookmarks";
     }
 
-    await user.save({validateBeforeSave: false});
+    await user.save({ validateBeforeSave: false });
 
     res
     .status(200)
@@ -197,7 +202,7 @@ const toggleTweetToUserBookmark = asyncHandler(async (req, res) => {
             {
                 bookmarked: tweetId
             },
-            "Tweet bookmarked successfully"
+            message
         )
     )
 })

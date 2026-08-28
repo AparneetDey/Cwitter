@@ -65,10 +65,9 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
 
   const handleBookmarkClick = (e) => {
     e.stopPropagation();
+    toggleBookmark(postId, setPosts, showToast);
     if (onBookmarkToggle) {
       onBookmarkToggle(postId);
-    } else {
-      toggleBookmark(postId, setPosts, showToast);
     }
   };
 
