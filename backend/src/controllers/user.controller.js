@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 import { sendResetPassword, sendVerificationCode } from "../utils/Email.js";
 import crypto from "crypto";
 import mongoose from "mongoose";
+import { pipeline } from "stream";
 
 const cookieOptions = {
     httpOnly: true,
@@ -522,18 +523,44 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
                 from: "users",
                 localField: "bookmark.owner",
                 foreignField: "_id",
-                as: "owner"
-            }
-        },
-        {
-            $unwind: {
-                path: "$owner",
-                preserveNullAndEmptyArrays: true
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                            isVerified: 1
+                        }
+                    }
+                ]
             }
         },
         {
             $sort: {
                 "bookmark.createdAt": sortType === "asc" ? 1 : -1
+            }
+        },
+        {
+            $addFields: {
+                isRetweeted: {
+                    $in: [
+                        req?.user?._id,
+                        "$bookmark.retweets"
+                    ]
+                },
+                totalRetweets: {
+                    $size: "$bookmark.retweets"
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isBookmarked: {
+                    $in: [
+                        "$bookmark._id",
+                        req?.user?.bookmarks
+                    ]
+                }
             }
         },
         {
@@ -548,7 +575,10 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
                     username: "$owner.username",
                     avatar: "$owner.avatar",
                     isVerified: "$owner.isVerified"
-                }
+                },
+                isRetweeted: 1,
+                totalRetweets: 1,
+                isBookmarked: 1
             }
         }
     ];
