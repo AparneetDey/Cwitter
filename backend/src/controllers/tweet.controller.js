@@ -170,7 +170,7 @@ const getATweet = asyncHandler(async (req, res) => {
     )
 })
 
-const addTweetToUserBookmark = asyncHandler(async (req, res) => {
+const toggleTweetToUserBookmark = asyncHandler(async (req, res) => {
     const {tweetId} = req.params;
 
     if(!tweetId || tweetId.trim() === "") throw new ApiError(400, "Tweet id is required");
@@ -179,11 +179,15 @@ const addTweetToUserBookmark = asyncHandler(async (req, res) => {
 
     if(!tweet) throw new ApiError(404, "Tweet does not exist");
 
-    const user = await User.findByIdAndUpdate(req?.user?._id, {
-        $push: {
-            bookmarks: tweetId
-        }
-    });
+    const user = await User.findById(req?.user?._id);
+
+    if(user.bookmarks.find(t => t.equals(tweet._id))){
+        user.bookmarks.pull(tweet._id);
+    } else {
+        user.bookmarks.push(tweet._id);
+    }
+
+    await user.save({validateBeforeSave: false});
 
     res
     .status(200)
@@ -394,7 +398,7 @@ export {
     deleteATweet,
     editATweet,
     getATweet,
-    addTweetToUserBookmark,
+    toggleTweetToUserBookmark,
     toggleRetweet,
     getUserTweets,
     getUserFeed
