@@ -332,7 +332,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
 const getUserFeed = asyncHandler(async (req, res) => {
     const {page = 1, limit = 15} = req.query;
 
-    const feed = await Tweet.aggregate([
+    const pipeline = [
         {
             $lookup: {
                 from: "users",
@@ -385,7 +385,18 @@ const getUserFeed = asyncHandler(async (req, res) => {
                 retweets: 0,
             }
         }
-    ])
+    ]
+
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "tweets",
+            totalDocs: "totalTweets"
+        }
+    }
+
+    const feed = await Tweet.aggregatePaginate(Tweet.aggregate(pipeline), paginateOptions);
 
     res
     .status(200)

@@ -18,7 +18,7 @@ const Home = () => {
     setLoading(true);
     try {
       const res = await api.get('/tweets/feed/for-you');
-      const feedData = res?.data?.data || [];
+      const feedData = res?.data?.data?.tweets || [];
       console.log(feedData)
       setPosts(feedData);
     } catch (error) {
