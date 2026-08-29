@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import api from '../utils/axiosApi.util';
 import { useAuth } from './AuthContext';
 import VerificationModal from '../components/profile/VerificationModal';
+import uploadToImageKit from '../utils/imageKit';
 
 const PostContext = createContext(null);
 
@@ -30,7 +31,7 @@ export const PostProvider = ({ children }) => {
   }, []);
 
   // Create Post Action in Context (Checks isVerified & handles 401 unverified error)
-  const createPost = useCallback(async (content, media = [], showToast = null) => {
+  const createPost = useCallback(async (content, rawMedia = [], showToast = null) => {
 
     if (!content || !content.trim()) return null;
 
@@ -41,12 +42,33 @@ export const PostProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.post('/tweets/', { content: content.trim(), media });
+      const mediaUrls = [];
+
+      // If raw File objects are passed, upload them to ImageKit when creating the tweet
+      if (Array.isArray(rawMedia) && rawMedia.length > 0) {
+        for (const item of rawMedia) {
+          const fileToUpload = item instanceof File ? item : (item?.file instanceof File ? item.file : null);
+          if (fileToUpload) {
+            try {
+              const res = await uploadToImageKit(fileToUpload);
+              if (res?.url) {
+                mediaUrls.push(res.url);
+              }
+            } catch (uErr) {
+              console.warn("Failed to upload file to ImageKit:", uErr);
+            }
+          } else if (typeof item === 'string' && item.startsWith('http')) {
+            mediaUrls.push(item);
+          }
+        }
+      }
+
+      const res = await api.post('/tweets/', { content: content.trim(), media: mediaUrls });
       const createdTweet = res?.data?.data;
 
       // Register Media document entries via Media API controller
-      if (createdTweet?._id && Array.isArray(media) && media.length > 0) {
-        for (const url of media) {
+      if (createdTweet?._id && mediaUrls.length > 0) {
+        for (const url of mediaUrls) {
           try {
             await api.post(`/medias/add/${createdTweet._id}`, { url });
           } catch (mErr) {

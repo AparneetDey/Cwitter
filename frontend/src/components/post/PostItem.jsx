@@ -14,9 +14,89 @@ import {
   CheckCircle2,
   MoreHorizontal,
   Trash2,
-  Pencil
+  Pencil,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import useFormatter from '../../hooks/useFormatter';
+
+const MediaCarousel = ({ media, maxH = "max-h-96" }) => {
+  const scrollRef = useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, clientWidth } = scrollRef.current;
+    if (clientWidth > 0) {
+      const index = Math.round(scrollLeft / clientWidth);
+      setActiveIndex(index);
+    }
+  };
+
+  const scroll = (direction, e) => {
+    e.stopPropagation();
+    if (!scrollRef.current) return;
+    const { clientWidth } = scrollRef.current;
+    const scrollAmount = direction === 'left' ? -clientWidth : clientWidth;
+    scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
+
+  if (!Array.isArray(media) || media.length === 0) return null;
+
+  return (
+    <div className="mt-2.5 relative rounded-2xl overflow-hidden border border-[#2f3336] group/carousel" onClick={(e) => e.stopPropagation()}>
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className={`flex overflow-x-auto snap-x snap-mandatory scrollbar-none ${maxH}`}
+      >
+        {media.map((url, idx) => (
+          <div key={idx} className={`w-full shrink-0 snap-start ${maxH} flex items-center justify-center bg-black`}>
+            {url.match(/\.(mp4|webm|mov)$/i) ? (
+              <video src={url} controls className={`w-full h-full object-cover ${maxH}`} />
+            ) : (
+              <img src={url} alt={`post media ${idx + 1}`} className={`w-full h-full object-cover ${maxH}`} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation Arrows */}
+      {media.length > 1 && (
+        <>
+          {/* Left Arrow */}
+          {activeIndex > 0 && (
+            <button
+              type="button"
+              onClick={(e) => scroll('left', e)}
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+              title="Previous media"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Right Arrow */}
+          {activeIndex < media.length - 1 && (
+            <button
+              type="button"
+              onClick={(e) => scroll('right', e)}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+              title="Next media"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Page Counter Badge */}
+          <div className="absolute top-2.5 right-2.5 bg-black/70 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-xs font-semibold text-white pointer-events-none z-10">
+            {activeIndex + 1} / {media.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
   const navigate = useNavigate();
@@ -200,19 +280,9 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
             {post?.content}
           </p>
 
-          {/* Post Media Attachments (Images & Videos) */}
-          {(Array.isArray(post?.media) && post.media.length > 0) ? (
-            <div className="mt-2 space-y-2">
-              {post.media.map((url, idx) => (
-                <div key={idx} className="rounded-2xl overflow-hidden border border-[#2f3336] max-h-96">
-                  {url.match(/\.(mp4|webm|mov)$/i) ? (
-                    <video src={url} controls className="w-full h-full object-cover" />
-                  ) : (
-                    <img src={url} alt={`post media ${idx}`} className="w-full h-full object-cover" />
-                  )}
-                </div>
-              ))}
-            </div>
+          {/* Post Media Attachments (Scrollable Carousel with full width & arrows) */}
+          {Array.isArray(post?.media) && post.media.length > 0 ? (
+            <MediaCarousel media={post.media} maxH="max-h-96" />
           ) : post?.image ? (
             <div className="mt-2 rounded-2xl overflow-hidden border border-[#2f3336] max-h-96">
               <img src={post?.image} alt="post media" className="w-full h-full object-cover" />

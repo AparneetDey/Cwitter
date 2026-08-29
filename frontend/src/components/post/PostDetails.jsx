@@ -11,7 +11,9 @@ import {
   MoreHorizontal,
   Pencil,
   Trash2,
-  Loader2
+  Loader2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import api from '../../utils/axiosApi.util';
 import { getAvatarUrl } from '../../utils/constants';
@@ -19,6 +21,84 @@ import { usePost } from '../../context/PostContext';
 import { useAuth } from '../../context/AuthContext';
 import useFormatter from '../../hooks/useFormatter';
 import EditPostModal from './EditPostModal';
+
+const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
+  const scrollRef = React.useRef(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = () => {
+    if (!scrollRef.current) return;
+    const { scrollLeft, clientWidth } = scrollRef.current;
+    if (clientWidth > 0) {
+      const index = Math.round(scrollLeft / clientWidth);
+      setActiveIndex(index);
+    }
+  };
+
+  const scroll = (direction, e) => {
+    e?.stopPropagation();
+    if (!scrollRef.current) return;
+    const { clientWidth } = scrollRef.current;
+    const scrollAmount = direction === 'left' ? -clientWidth : clientWidth;
+    scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  };
+
+  if (!Array.isArray(media) || media.length === 0) return null;
+
+  return (
+    <div className="relative rounded-2xl overflow-hidden border border-[#2f3336] group/carousel">
+      <div
+        ref={scrollRef}
+        onScroll={handleScroll}
+        className={`flex overflow-x-auto snap-x snap-mandatory scrollbar-none ${maxH}`}
+      >
+        {media.map((url, idx) => (
+          <div key={idx} className={`w-full shrink-0 snap-start ${maxH} flex items-center justify-center bg-black`}>
+            {url.match(/\.(mp4|webm|mov)$/i) ? (
+              <video src={url} controls className={`w-full h-full object-cover ${maxH}`} />
+            ) : (
+              <img src={url} alt={`post media ${idx + 1}`} className={`w-full h-full object-cover ${maxH}`} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Navigation Arrows */}
+      {media.length > 1 && (
+        <>
+          {/* Left Arrow */}
+          {activeIndex > 0 && (
+            <button
+              type="button"
+              onClick={(e) => scroll('left', e)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+              title="Previous media"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Right Arrow */}
+          {activeIndex < media.length - 1 && (
+            <button
+              type="button"
+              onClick={(e) => scroll('right', e)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+              title="Next media"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Page Counter Badge */}
+          <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-semibold text-white pointer-events-none z-10">
+            {activeIndex + 1} / {media.length}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
 
 const PostDetails = () => {
   const { postId } = useParams();
@@ -224,19 +304,9 @@ const PostDetails = () => {
               {post?.content}
             </p>
 
-            {/* Post Media Attachments (Images & Videos) */}
-            {(Array.isArray(post?.media) && post.media.length > 0) ? (
-              <div className="space-y-3">
-                {post.media.map((url, idx) => (
-                  <div key={idx} className="rounded-2xl overflow-hidden border border-[#2f3336] max-h-112">
-                    {url.match(/\.(mp4|webm|mov)$/i) ? (
-                      <video src={url} controls className="w-full h-full object-cover" />
-                    ) : (
-                      <img src={url} alt={`post media ${idx}`} className="w-full h-full object-cover" />
-                    )}
-                  </div>
-                ))}
-              </div>
+            {/* Post Media Attachments (Scrollable Carousel with full width & arrows) */}
+            {Array.isArray(post?.media) && post.media.length > 0 ? (
+              <MediaCarousel media={post.media} maxH="max-h-120" />
             ) : post?.image ? (
               <div className="rounded-2xl overflow-hidden border border-[#2f3336] max-h-112">
                 <img src={post?.image} alt="post media" className="w-full h-full object-cover" />

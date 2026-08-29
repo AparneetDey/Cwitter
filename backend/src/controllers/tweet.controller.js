@@ -13,32 +13,18 @@ const createATweet = asyncHandler(async (req, res) => {
     if(!content || content?.trim() === "") throw new ApiError(400, "Content is required");
 
     const mediaList = Array.isArray(media) ? media : [];
+    if (mediaList.length > 3) {
+        throw new ApiError(400, "Maximum 3 media files are allowed per post.");
+    }
 
     const createdTweet = await Tweet.create({
         content,
-        media: mediaList,
+        media: [],
         owner: req?.user?._id,
         retweets: []
     });
 
     if(!createdTweet) throw new ApiError(500, "Something went wrong while creating tweet");
-
-    // Automatically create Media document entries in DB if media URLs are attached
-    // if (mediaList.length > 0) {
-    //     for (const url of mediaList) {
-    //         if (url && typeof url === 'string') {
-    //             try {
-    //                 await Media.create({
-    //                     url,
-    //                     tweet: createdTweet._id,
-    //                     owner: req?.user?._id
-    //                 });
-    //             } catch (mErr) {
-    //                 console.warn("Failed to create Media entry:", mErr);
-    //             }
-    //         }
-    //     }
-    // }
 
     res
     .status(201)
