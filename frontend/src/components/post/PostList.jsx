@@ -1,8 +1,44 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import PostItem from './PostItem';
 import PostSkeleton from './PostSkeleton';
 
-const PostList = ({ posts, setPosts, loading = false, onBookmarkToggle, emptyMessage = 'No posts to display yet.' }) => {
+const PostList = ({
+  posts,
+  setPosts,
+  loading = false,
+  loadingMore = false,
+  hasNextPage = false,
+  onLoadMore,
+  onBookmarkToggle,
+  emptyMessage = 'No posts to display yet.'
+}) => {
+  const sentinelRef = useRef(null);
+
+  // Auto infinite scroll when bottom sentinel scrolls into view
+  useEffect(() => {
+    if (!hasNextPage || loadingMore || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+    };
+  }, [hasNextPage, loadingMore, onLoadMore]);
+
   if (loading) {
     return <PostSkeleton count={3} />;
   }
@@ -25,6 +61,14 @@ const PostList = ({ posts, setPosts, loading = false, onBookmarkToggle, emptyMes
           onBookmarkToggle={onBookmarkToggle}
         />
       ))}
+
+      {/* Skeleton Loading Placeholder for Next Page */}
+      {loadingMore && <PostSkeleton count={2} />}
+
+      {/* Invisible IntersectionObserver Sentinel for Infinite Scroll */}
+      {hasNextPage && !loadingMore && (
+        <div ref={sentinelRef} className="h-10 w-full bg-transparent" />
+      )}
     </div>
   );
 };

@@ -41,6 +41,7 @@ const PostCreateModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const handleMediaSelect = (e) => {
+    e.stopPropagation();
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
@@ -94,21 +95,22 @@ const PostCreateModal = ({ isOpen, onClose }) => {
       onClick={onClose}
       className="fixed inset-0 bg-[#242d34]/60 backdrop-blur-xs z-50 flex items-start justify-center pt-16 sm:pt-20 px-4 animate-fade-in"
     >
-      {/* Hidden File Input for Local Media Selection */}
-      <input
-        type="file"
-        ref={mediaInputRef}
-        onChange={handleMediaSelect}
-        accept="image/*,video/*"
-        multiple
-        className="hidden"
-      />
-
       {/* Modal Container */}
       <div
         onClick={(e) => e.stopPropagation()}
         className="bg-black border border-[#2f3336] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col animate-scale-up"
       >
+        {/* Hidden File Input for Local Media Selection */}
+        <input
+          type="file"
+          ref={mediaInputRef}
+          onChange={handleMediaSelect}
+          onClick={(e) => e.stopPropagation()}
+          accept="image/*,video/*"
+          multiple
+          className="hidden"
+        />
+
         {/* Modal Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[#2f3336]/60">
           <button
@@ -171,7 +173,10 @@ const PostCreateModal = ({ isOpen, onClose }) => {
               <div className="flex items-center gap-1 text-[#1d9bf0]">
                 <button
                   type="button"
-                  onClick={() => mediaInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    mediaInputRef.current?.click();
+                  }}
                   disabled={selectedMedia.length >= 3 || loading}
                   className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center space-x-1"
                   title={selectedMedia.length >= 3 ? "Maximum 3 media files reached" : "Attach photos or videos (up to 3)"}

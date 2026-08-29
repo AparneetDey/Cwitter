@@ -92,9 +92,9 @@ export const PostProvider = ({ children }) => {
     }
   }, [user, openVerificationModal, refreshFeed]);
 
-  // Edit Post Action in Context
-  const editPost = useCallback(async (postId, newContent, setPosts, showToast) => {
-    if (!newContent || !newContent.trim()) return;
+  // Edit Post Action in Context (Supports media additions and removals)
+  const editPost = useCallback(async (postId, newContent, mediaItems = [], removedUrls = [], showToast = null) => {
+    if (!postId) return;
 
     if (!user?.isVerified) {
       triggerToast(showToast, 'Account verification required to edit posts.');
@@ -102,24 +102,55 @@ export const PostProvider = ({ children }) => {
       return;
     }
 
-    if (setPosts) {
-      setPosts((prevPosts) =>
-        prevPosts
-          ? prevPosts.map((post) => {
-              const id = post._id || post.id;
-              if (String(id) === String(postId)) {
-                return { ...post, content: newContent.trim() };
-              }
-              return post;
-            })
-          : prevPosts
-      );
-    }
-
     try {
-      const res = await api.patch(`/tweets/edit/${postId}`, { content: newContent.trim() });
+      const finalMediaUrls = [];
+
+      // Upload any newly added raw File objects to ImageKit upon saving
+      if (Array.isArray(mediaItems) && mediaItems.length > 0) {
+        for (const item of mediaItems) {
+          if (item?.isNew && item?.file instanceof File) {
+            try {
+              const res = await uploadToImageKit(item.file);
+              if (res?.url) {
+                finalMediaUrls.push(res.url);
+                // Call addAMedia API controller endpoint
+                try {
+                  await api.post(`/medias/add/${postId}`, { url: res.url });
+                } catch (mErr) {
+                  console.warn("Failed to register added media:", mErr);
+                }
+              }
+            } catch (uErr) {
+              console.warn("Failed to upload new media file to ImageKit:", uErr);
+            }
+          } else if (item?.url && typeof item.url === 'string') {
+            finalMediaUrls.push(item.url);
+          } else if (typeof item === 'string') {
+            finalMediaUrls.push(item);
+          }
+        }
+      }
+
+      // Invoke deleteAMedia API controller endpoint for removed media URLs
+      if (Array.isArray(removedUrls) && removedUrls.length > 0) {
+        for (const url of removedUrls) {
+          try {
+            await api.delete(`/medias/delete/media/${encodeURIComponent(url)}`);
+          } catch (dErr) {
+            console.warn("Failed to delete removed media:", dErr);
+          }
+        }
+      }
+
+      // Update tweet content & media array on backend
+      const res = await api.patch(`/tweets/edit/${postId}`, {
+        content: newContent ? newContent.trim() : "",
+        media: finalMediaUrls
+      });
+
       triggerToast(showToast, res?.data?.message || 'Post updated successfully!');
       refreshFeed();
+      return res?.data?.data;
     } catch (error) {
       const msg = error?.response?.data?.message || 'Failed to edit post';
       if (msg.includes('not verified')) {

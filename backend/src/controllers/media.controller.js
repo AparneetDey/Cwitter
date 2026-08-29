@@ -3,6 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { Media } from "../models/media.model.js";
 import { Tweet } from "../models/tweet.model.js";
+import mongoose from "mongoose";
 
 const addAMedia = asyncHandler(async (req, res) => {
     const { url } = req.body;
@@ -40,13 +41,21 @@ const deleteAMedia = asyncHandler(async (req, res) => {
 
     if (!mediaId || mediaId.trim() === "") throw new ApiError(400, "Media id is required");
 
-    const existedMedia = await Media.findById(mediaId);
+    let existedMedia = null;
+    if (mongoose.Types.ObjectId.isValid(mediaId)) {
+        existedMedia = await Media.findById(mediaId);
+    }
+
+    if (!existedMedia) {
+        const decodedUrl = decodeURIComponent(mediaId);
+        existedMedia = await Media.findOne({ url: decodedUrl });
+    }
 
     if (!existedMedia) throw new ApiError(404, "Media not found");
 
     if (!existedMedia.isOwner(req?.user?._id)) throw new ApiError(409, "Unauthorized action");
 
-    const deletedResponse = await Media.deleteOne({ _id: mediaId });
+    const deletedResponse = await Media.deleteOne({ _id: existedMedia._id });
 
     if (!deletedResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting the media");
 

@@ -39,14 +39,27 @@ const Profile = () => {
 
   // Cached tab state (null means not loaded yet)
   const [posts, setPosts] = useState(null);
+  const [postsPage, setPostsPage] = useState(1);
+  const [postsHasNext, setPostsHasNext] = useState(false);
+  const [loadingMorePosts, setLoadingMorePosts] = useState(false);
+
   const [followersList, setFollowersList] = useState(null);
+  const [followersPage, setFollowersPage] = useState(1);
+  const [followersHasNext, setFollowersHasNext] = useState(false);
+  const [loadingMoreFollowers, setLoadingMoreFollowers] = useState(false);
+
   const [followingList, setFollowingList] = useState(null);
+  const [followingPage, setFollowingPage] = useState(1);
+  const [followingHasNext, setFollowingHasNext] = useState(false);
+  const [loadingMoreFollowing, setLoadingMoreFollowing] = useState(false);
 
   const isOwnProfile = currentUser?._id && (String(currentUser._id) === String(user?._id) || String(currentUser._id) === String(userId));
 
-  const triggerToast = useCallback((msg) => {
-    if (showToast) showToast(msg);
-  }, [showToast]);
+  const triggerToast = (msg) => {
+    if (showToast && typeof showToast === 'function') {
+      showToast(msg);
+    }
+  };
 
   // Fetch Profile Overview Dashboard
   const getUserDashboard = useCallback(async () => {
@@ -63,47 +76,95 @@ const Profile = () => {
   }, [userId, showToast]);
 
   // Fetch User Posts / Tweets
-  const getUserTweets = useCallback(async () => {
-    setTabLoading(true);
+  const getUserTweets = useCallback(async (pageToFetch = 1) => {
+    if (pageToFetch === 1) {
+      setTabLoading(true);
+    } else {
+      setLoadingMorePosts(true);
+    }
+
     try {
-      const res = await api.get(`tweets/user/${userId}`);
-      const data = res.data;
-      setPosts(data.data.tweets || []);
+      const res = await api.get(`tweets/user/${userId}?page=${pageToFetch}&limit=15`);
+      const data = res.data?.data;
+      const docs = data?.tweets || [];
+      const hasNext = Boolean(data?.hasNextPage);
+
+      if (pageToFetch === 1) {
+        setPosts(docs);
+      } else {
+        setPosts((prev) => [...(prev || []), ...docs]);
+      }
+
+      setPostsHasNext(hasNext);
+      setPostsPage(pageToFetch);
     } catch (error) {
       if (showToast) showToast(error?.response?.data?.message || "Failed to fetch posts");
-      setPosts([]);
+      if (pageToFetch === 1) setPosts([]);
     } finally {
       setTabLoading(false);
+      setLoadingMorePosts(false);
     }
   }, [userId, showToast]);
 
   // Fetch User Followers
-  const getUserFollowers = useCallback(async () => {
-    setTabLoading(true);
+  const getUserFollowers = useCallback(async (pageToFetch = 1) => {
+    if (pageToFetch === 1) {
+      setTabLoading(true);
+    } else {
+      setLoadingMoreFollowers(true);
+    }
+
     try {
-      const res = await api.get(`follows/followers/${userId}`);
-      const data = res.data;
-      setFollowersList(data.data.followers || []);
+      const res = await api.get(`follows/followers/${userId}?page=${pageToFetch}&limit=10`);
+      const data = res.data?.data;
+      const docs = data?.followers || [];
+      const hasNext = Boolean(data?.hasNextPage);
+
+      if (pageToFetch === 1) {
+        setFollowersList(docs);
+      } else {
+        setFollowersList((prev) => [...(prev || []), ...docs]);
+      }
+
+      setFollowersHasNext(hasNext);
+      setFollowersPage(pageToFetch);
     } catch (error) {
       if (showToast) showToast(error?.response?.data?.message || "Failed to fetch followers");
-      setFollowersList([]);
+      if (pageToFetch === 1) setFollowersList([]);
     } finally {
       setTabLoading(false);
+      setLoadingMoreFollowers(false);
     }
   }, [userId, showToast]);
 
   // Fetch User Followings
-  const getUserFollowings = useCallback(async () => {
-    setTabLoading(true);
+  const getUserFollowings = useCallback(async (pageToFetch = 1) => {
+    if (pageToFetch === 1) {
+      setTabLoading(true);
+    } else {
+      setLoadingMoreFollowing(true);
+    }
+
     try {
-      const res = await api.get(`follows/followings/${userId}`);
-      const data = res.data;
-      setFollowingList(data.data.followings || []);
+      const res = await api.get(`follows/followings/${userId}?page=${pageToFetch}&limit=10`);
+      const data = res.data?.data;
+      const docs = data?.followings || [];
+      const hasNext = Boolean(data?.hasNextPage);
+
+      if (pageToFetch === 1) {
+        setFollowingList(docs);
+      } else {
+        setFollowingList((prev) => [...(prev || []), ...docs]);
+      }
+
+      setFollowingHasNext(hasNext);
+      setFollowingPage(pageToFetch);
     } catch (error) {
       if (showToast) showToast(error?.response?.data?.message || "Failed to fetch followings");
-      setFollowingList([]);
+      if (pageToFetch === 1) setFollowingList([]);
     } finally {
       setTabLoading(false);
+      setLoadingMoreFollowing(false);
     }
   }, [userId, showToast]);
 
@@ -237,6 +298,9 @@ const Profile = () => {
         return (
           <UserList
             users={followersList}
+            loadingMore={loadingMoreFollowers}
+            hasNextPage={followersHasNext}
+            onLoadMore={() => getUserFollowers(followersPage + 1)}
             onToggleFollow={handleToggleUserFollow}
             emptyMessage="No followers yet."
           />
@@ -245,6 +309,9 @@ const Profile = () => {
         return (
           <UserList
             users={followingList}
+            loadingMore={loadingMoreFollowing}
+            hasNextPage={followingHasNext}
+            onLoadMore={() => getUserFollowings(followingPage + 1)}
             onToggleFollow={handleToggleUserFollow}
             emptyMessage="Not following anyone yet."
           />
@@ -254,6 +321,9 @@ const Profile = () => {
           <PostList
             posts={posts}
             setPosts={setPosts}
+            loadingMore={loadingMorePosts}
+            hasNextPage={postsHasNext}
+            onLoadMore={() => getUserTweets(postsPage + 1)}
           />
         );
       default:

@@ -11,36 +11,60 @@ const Bookmarks = () => {
   const { showToast } = useOutletContext() || {};
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
 
-  // Fetch Bookmarks from API
-  const getBookmarks = useCallback(async () => {
-    setLoading(true);
+  // Fetch Bookmarks from API with Pagination
+  const getBookmarks = useCallback(async (pageToFetch = 1) => {
+    if (pageToFetch === 1) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
     try {
-      const res = await api.get('/users/bookmarks');
-      const data = res.data;
-      // Extract bookmarks array and mark isBookmarked = true by default
-      const docs = data?.data?.bookmarks || [];
+      const res = await api.get(`/users/bookmarks?page=${pageToFetch}&limit=15`);
+      const data = res.data?.data;
+      const docs = data?.bookmarks || [];
+      const hasNext = Boolean(data?.hasNextPage);
+
       const formattedDocs = docs.map((doc) => ({
         ...doc,
         id: doc._id || doc.id,
         isBookmarked: true,
       }));
-      setBookmarks(formattedDocs);
+
+      if (pageToFetch === 1) {
+        setBookmarks(formattedDocs);
+      } else {
+        setBookmarks((prev) => [...prev, ...formattedDocs]);
+      }
+
+      setHasNextPage(hasNext);
+      setPage(pageToFetch);
     } catch (error) {
       if (showToast) showToast(error?.response?.data?.message || 'Failed to fetch bookmarks');
-      setBookmarks([]);
+      if (pageToFetch === 1) setBookmarks([]);
     } finally {
       setLoading(false);
+      setLoadingMore(false);
     }
   }, [showToast]);
 
   useEffect(() => {
-    getBookmarks();
+    getBookmarks(1);
   }, [getBookmarks]);
 
   const handleBookmarkToggle = (postId) => {
     // Filter out unbookmarked item from active bookmarks list view
     setBookmarks((prev) => prev.filter((post) => String(post.id || post._id) !== String(postId)));
+  };
+
+  const handleLoadMore = () => {
+    if (hasNextPage && !loadingMore) {
+      getBookmarks(page + 1);
+    }
   };
 
   return (
@@ -64,6 +88,10 @@ const Bookmarks = () => {
         <PostList
           posts={bookmarks}
           setPosts={setBookmarks}
+          loading={loading}
+          loadingMore={loadingMore}
+          hasNextPage={hasNextPage}
+          onLoadMore={handleLoadMore}
           onBookmarkToggle={handleBookmarkToggle}
         />
       ) : (

@@ -13,7 +13,8 @@ import {
   Trash2,
   Loader2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Image as ImageIcon
 } from 'lucide-react';
 import api from '../../utils/axiosApi.util';
 import { getAvatarUrl } from '../../utils/constants';
@@ -21,6 +22,43 @@ import { usePost } from '../../context/PostContext';
 import { useAuth } from '../../context/AuthContext';
 import useFormatter from '../../hooks/useFormatter';
 import EditPostModal from './EditPostModal';
+
+const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-120" }) => {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const isVideo = url?.match(/\.(mp4|webm|mov)$/i);
+
+  return (
+    <div className={`relative w-full h-full flex items-center justify-center bg-[#16181c] overflow-hidden ${maxH}`}>
+      {/* Skeleton Pulse Placeholder */}
+      {!isLoaded && (
+        <div className="absolute inset-0 bg-gradient-to-r from-[#16181c] via-[#242830] to-[#16181c] animate-pulse flex flex-col items-center justify-center space-y-2 z-0">
+          <ImageIcon className="w-8 h-8 text-gray-600 animate-bounce" />
+          <span className="text-xs font-semibold text-gray-500">Loading media...</span>
+        </div>
+      )}
+
+      {isVideo ? (
+        <video
+          src={url}
+          controls
+          onLoadedData={() => setIsLoaded(true)}
+          className={`w-full h-full object-cover relative z-10 ${maxH} transition-opacity duration-300 ${
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      ) : (
+        <img
+          src={url}
+          alt={alt || "post media"}
+          onLoad={() => setIsLoaded(true)}
+          className={`w-full h-full object-cover relative z-10 ${maxH} transition-opacity duration-300 ${
+            isLoaded ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      )}
+    </div>
+  );
+};
 
 const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
   const scrollRef = React.useRef(null);
@@ -54,11 +92,7 @@ const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
       >
         {media.map((url, idx) => (
           <div key={idx} className={`w-full shrink-0 snap-start ${maxH} flex items-center justify-center bg-black`}>
-            {url.match(/\.(mp4|webm|mov)$/i) ? (
-              <video src={url} controls className={`w-full h-full object-cover ${maxH}`} />
-            ) : (
-              <img src={url} alt={`post media ${idx + 1}`} className={`w-full h-full object-cover ${maxH}`} />
-            )}
+            <MediaImageWithSkeleton url={url} alt={`post media ${idx + 1}`} maxH={maxH} />
           </div>
         ))}
       </div>

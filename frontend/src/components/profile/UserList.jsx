@@ -1,13 +1,47 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getAvatarUrl } from '../../utils/constants';
 import UserListSkeleton from './UserListSkeleton';
 
-const UserList = ({ users, loading, onToggleFollow, emptyMessage = 'No users found.' }) => {
+const UserList = ({
+  users,
+  loading = false,
+  loadingMore = false,
+  hasNextPage = false,
+  onLoadMore,
+  onToggleFollow,
+  emptyMessage = 'No users found.'
+}) => {
   const navigate = useNavigate();
   const { user: currentUser } = useAuth();
+  const sentinelRef = useRef(null);
+
+  // Auto infinite scroll when bottom sentinel scrolls into view
+  useEffect(() => {
+    if (!hasNextPage || loadingMore || !onLoadMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { threshold: 0.1, rootMargin: '200px' }
+    );
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) {
+      observer.observe(currentSentinel);
+    }
+
+    return () => {
+      if (currentSentinel) {
+        observer.unobserve(currentSentinel);
+      }
+    };
+  }, [hasNextPage, loadingMore, onLoadMore]);
 
   if (loading) {
     return <UserListSkeleton count={4} />;
@@ -64,7 +98,7 @@ const UserList = ({ users, loading, onToggleFollow, emptyMessage = 'No users fou
               </div>
             </div>
 
-            {/* Follow / Unfollow Button (Hidden for logged-in user themselves) */}
+            {/* Follow / Unfollow Button */}
             {!isSelf && (
               <button
                 onClick={(e) => {
@@ -83,6 +117,14 @@ const UserList = ({ users, loading, onToggleFollow, emptyMessage = 'No users fou
           </div>
         );
       })}
+
+      {/* Skeleton Loading Placeholder for Next Page */}
+      {loadingMore && <UserListSkeleton count={2} />}
+
+      {/* Invisible IntersectionObserver Sentinel for Infinite Scroll */}
+      {hasNextPage && !loadingMore && (
+        <div ref={sentinelRef} className="h-10 w-full bg-transparent" />
+      )}
     </div>
   );
 };
