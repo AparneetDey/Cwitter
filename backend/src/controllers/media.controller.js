@@ -75,7 +75,54 @@ const deleteAMedia = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserMedia = asyncHandler(async (req, res) => {
+    const {userId} = req.params;
+
+    if(!userId || userId.trim() === "") throw new ApiError(400, "User id is required");
+
+    const {page = 1, limit = 15} = req.query;
+
+    const pipeline = [
+        {
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $project: {
+                _id: 0,
+                url: 1
+            }
+        }
+    ]
+    
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "medias",
+            totalDocs: "totalMedias"
+        }
+    }
+
+    const media = await Media.aggregatePaginate(Media.aggregate(pipeline), paginateOptions);
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            {
+                ...media,
+                medias: media.medias.map(item => item.url)
+            },
+            "User media fetched successfully"
+        )
+    )
+})
+
 export {
     addAMedia,
     deleteAMedia,
+    getUserMedia
 };

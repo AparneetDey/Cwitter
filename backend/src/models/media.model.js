@@ -1,4 +1,5 @@
 import mongoose, { Schema } from "mongoose";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const mediaSchema = new Schema(
     {
@@ -25,5 +26,7 @@ const mediaSchema = new Schema(
 mediaSchema.methods.isOwner = function(userId) {
     return this.owner.equals(userId);
 }
+
+mediaSchema.plugin(aggregatePaginate)
 
 export const Media = mongoose.model("Media", mediaSchema);

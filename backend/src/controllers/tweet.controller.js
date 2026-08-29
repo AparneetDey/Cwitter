@@ -4,7 +4,6 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { Tweet } from "../models/tweet.model.js";
 import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
-import { deleteTweetMedia } from "./media.controller.js";
 import { Media } from "../models/media.model.js";
 
 const createATweet = asyncHandler(async (req, res) => {
