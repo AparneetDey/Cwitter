@@ -12,9 +12,11 @@ const createATweet = asyncHandler(async (req, res) => {
 
     if(!content || content?.trim() === "") throw new ApiError(400, "Content is required");
 
+    const mediaList = Array.isArray(media) ? media : [];
+
     const createdTweet = await Tweet.create({
         content,
-        media: [],
+        media: mediaList,
         owner: req?.user?._id,
         retweets: []
     });
@@ -22,14 +24,18 @@ const createATweet = asyncHandler(async (req, res) => {
     if(!createdTweet) throw new ApiError(500, "Something went wrong while creating tweet");
 
     // Automatically create Media document entries in DB if media URLs are attached
-    // if (Array.isArray(media) && media.length > 0) {
-    //     for (const url of media) {
+    // if (mediaList.length > 0) {
+    //     for (const url of mediaList) {
     //         if (url && typeof url === 'string') {
-    //             await Media.create({
-    //                 url,
-    //                 tweet: createdTweet._id,
-    //                 owner: req?.user?._id
-    //             });
+    //             try {
+    //                 await Media.create({
+    //                     url,
+    //                     tweet: createdTweet._id,
+    //                     owner: req?.user?._id
+    //                 });
+    //             } catch (mErr) {
+    //                 console.warn("Failed to create Media entry:", mErr);
+    //             }
     //         }
     //     }
     // }
@@ -56,7 +62,7 @@ const deleteATweet = asyncHandler(async (req, res) => {
 
     if(!storedTweet.isOwner(req?.user?._id)) throw new ApiError(401, "Unauthorized Action");
 
-    await deleteTweetMedia(req, res);
+    await Media.deleteMany({ tweet: tweetId });
 
     const tweetDeleteResponse = await Tweet.deleteOne({_id: tweetId});
 
@@ -136,22 +142,6 @@ const getATweet = asyncHandler(async (req, res) => {
                             fullName: 1,
                             avatar: 1,
                             isVerified: 1,
-                        }
-                    }
-                ]
-            }
-        },
-        {
-            $lookup: {
-                from: "medias",
-                localField: "media",
-                foreignField: "_id",
-                as: "media",
-                pipeline: [
-                    {
-                        $project: {
-                            _id: 0,
-                            url: 1
                         }
                     }
                 ]

@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import aggregatePaginate  from "mongoose-aggregate-paginate-v2";
+import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const tweetSchema = new Schema(
     {
@@ -9,14 +9,13 @@ const tweetSchema = new Schema(
         },
         media: [
             {
-                type: Schema.Types.ObjectId,
-                ref: "Media"
+                type: String
             }
         ],
         owner: {
             type: Schema.Types.ObjectId,
             ref: "User",
-            require: true
+            required: true
         },
         retweets: [
             {
@@ -24,15 +23,16 @@ const tweetSchema = new Schema(
                 ref: "User"
             }
         ]
-    }, {
+    },
+    {
         timestamps: true
     }
-)
+);
 
 tweetSchema.plugin(aggregatePaginate);
 
 tweetSchema.methods.isOwner = function (userId) {
-    return this.owner.equals(userId)
-}
+    return this.owner.equals(userId);
+};
 
 export const Tweet = mongoose.model("Tweet", tweetSchema);

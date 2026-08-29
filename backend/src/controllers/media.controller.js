@@ -19,9 +19,9 @@ const addAMedia = asyncHandler(async (req, res) => {
         owner: req?.user?._id
     });
 
-    // Also push the media URL into the Tweet document's media array
+    // Add the media URL to the Tweet document's media array without duplicates
     await Tweet.findByIdAndUpdate(tweetId, {
-        $push: { media: media._id }
+        $addToSet: { media: media.url }
     });
 
     res
@@ -52,7 +52,7 @@ const deleteAMedia = asyncHandler(async (req, res) => {
 
     // Pull the media URL from the associated Tweet
     await Tweet.findByIdAndUpdate(existedMedia.tweet, {
-        $pull: { media: existedMedia._id }
+        $pull: { media: existedMedia.url }
     });
 
     res

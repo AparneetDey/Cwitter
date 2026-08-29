@@ -567,6 +567,7 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
             $project: {
                 _id: "$bookmark._id",
                 content: "$bookmark.content",
+                media: "$bookmark.media",
                 reshareTweet: "$bookmark.tweet",
                 createdAt: "$bookmark.createdAt",
                 owner: {
