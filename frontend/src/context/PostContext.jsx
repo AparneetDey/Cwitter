@@ -167,12 +167,25 @@ export const PostProvider = ({ children }) => {
               const id = post._id || post.id;
               if (String(id) === String(postId)) {
                 nextRetweetedState = !post.isRetweeted;
+
+                const currentCount =
+                  typeof post.totalRetweets === 'number'
+                    ? post.totalRetweets
+                    : typeof post.retweets === 'number'
+                    ? post.retweets
+                    : Array.isArray(post.retweets)
+                    ? post.retweets.length
+                    : 0;
+
+                const nextCount = nextRetweetedState
+                  ? currentCount + 1
+                  : Math.max(0, currentCount - 1);
+
                 return {
                   ...post,
                   isRetweeted: nextRetweetedState,
-                  retweets: nextRetweetedState
-                    ? (post.retweets || 0) + 1
-                    : Math.max(0, (post.retweets || 1) - 1),
+                  totalRetweets: nextCount,
+                  retweets: nextCount,
                 };
               }
               return post;

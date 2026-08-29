@@ -420,8 +420,6 @@ const getUserFollowingFeed = asyncHandler(async (req, res) => {
         }
     );
 
-    console.log(followings);
-
     const pipeline = [
         {
             $match: {

@@ -33,6 +33,16 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
   const ownerId = post?.owner?._id || post?.owner || post?.author?._id || post?.author?.id;
   const isOwner = currentUser?._id && String(currentUser._id) === String(ownerId);
 
+  // Robust calculation for initial and dynamic retweet count
+  const retweetCount =
+    typeof post?.totalRetweets === 'number'
+      ? post.totalRetweets
+      : typeof post?.retweets === 'number'
+      ? post.retweets
+      : Array.isArray(post?.retweets)
+      ? post.retweets.length
+      : 0;
+
   // Close dropdown menu on click outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -93,7 +103,10 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
         showToast={showToast}
       />
 
-      <article className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer relative">
+      <article
+        onClick={() => navigate(`/post/${postId}`)}
+        className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer relative"
+      >
         {/* Owner Avatar (Navigates to Profile) */}
         <img
           src={getAvatarUrl(post?.owner?.avatar || post?.author?.avatar)}
@@ -215,7 +228,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
               <div className="p-2 rounded-full group-hover:bg-emerald-500/10">
                 <Repeat2 className="w-4 h-4" />
               </div>
-              <span>{formatNumber(post?.retweets || post?.totalRetweets || 0)}</span>
+              <span>{formatNumber(retweetCount)}</span>
             </button>
 
             {/* Like */}

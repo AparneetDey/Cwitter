@@ -6,6 +6,7 @@ import MainLayout from './components/layout/MainLayout';
 import Home from './components/home/Home';
 import Profile from './components/profile/Profile';
 import Bookmarks from './components/bookmarks/Bookmarks';
+import PostDetails from './components/post/PostDetails';
 import Register from './components/auth/Register';
 import Login from './components/auth/Login';
 import ForgotPassword from './components/auth/ForgotPassword';
@@ -24,6 +25,7 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/bookmarks" element={<Bookmarks />} />
         <Route path="/profile/:userId" element={<Profile />} />
+        <Route path="/post/:postId" element={<PostDetails />} />
       </Route>
 
       {/* Auth Routes: Public Only (Redirects to Home if Logged In) */}
