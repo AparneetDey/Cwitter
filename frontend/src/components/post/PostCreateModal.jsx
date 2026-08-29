@@ -4,6 +4,7 @@ import { X, Image as ImageIcon, Smile, BarChart2, Calendar, MapPin, Loader2 } fr
 import { useAuth } from '../../context/AuthContext';
 import { usePost } from '../../context/PostContext';
 import { getAvatarUrl } from '../../utils/constants';
+import EmojiPickerPopover from '../common/EmojiPickerPopover';
 
 const PostCreateModal = ({ isOpen, onClose }) => {
   const { user } = useAuth();
@@ -11,9 +12,11 @@ const PostCreateModal = ({ isOpen, onClose }) => {
   const { showToast } = useOutletContext() || {};
   const mediaInputRef = useRef(null);
   const textareaRef = useRef(null);
+  const emojiButtonRef = useRef(null);
 
   const [postText, setPostText] = useState('');
   const [selectedMedia, setSelectedMedia] = useState([]); // Array of { file, previewUrl }
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   // Focus textarea when modal opens & reset text/media
@@ -21,6 +24,7 @@ const PostCreateModal = ({ isOpen, onClose }) => {
     if (isOpen) {
       setPostText('');
       setSelectedMedia([]);
+      setShowEmojiPicker(false);
       setTimeout(() => {
         textareaRef.current?.focus();
       }, 100);
@@ -69,6 +73,10 @@ const PostCreateModal = ({ isOpen, onClose }) => {
     });
   };
 
+  const handleEmojiClick = (emojiData) => {
+    setPostText((prev) => prev + emojiData.emoji);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if ((!postText.trim() && selectedMedia.length === 0) || loading) return;
@@ -79,6 +87,7 @@ const PostCreateModal = ({ isOpen, onClose }) => {
       await createPost(postText.trim(), rawFiles, showToast);
       setPostText('');
       setSelectedMedia([]);
+      setShowEmojiPicker(false);
       onClose();
     } catch (error) {
       console.error(error);
@@ -189,9 +198,31 @@ const PostCreateModal = ({ isOpen, onClose }) => {
                 <button type="button" className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors cursor-pointer" title="Poll">
                   <BarChart2 className="w-5 h-5" />
                 </button>
-                <button type="button" className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors cursor-pointer" title="Emoji">
+
+                {/* Emoji Picker Button */}
+                <button
+                  ref={emojiButtonRef}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEmojiPicker((prev) => !prev);
+                  }}
+                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                    showEmojiPicker ? 'bg-[#1d9bf0]/20 text-[#1d9bf0]' : 'hover:bg-[#1d9bf0]/10 text-[#1d9bf0]'
+                  }`}
+                  title="Add emoji"
+                >
                   <Smile className="w-5 h-5" />
                 </button>
+
+                {/* Floating Portal Emoji Picker (Renders outside modal container to avoid overflow clipping) */}
+                <EmojiPickerPopover
+                  isOpen={showEmojiPicker}
+                  onClose={() => setShowEmojiPicker(false)}
+                  onEmojiClick={handleEmojiClick}
+                  triggerRef={emojiButtonRef}
+                />
+
                 <button type="button" className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors cursor-pointer" title="Schedule">
                   <Calendar className="w-5 h-5" />
                 </button>

@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { usePost } from '../../context/PostContext';
 import { getAvatarUrl } from '../../utils/constants';
+import EmojiPickerPopover from '../common/EmojiPickerPopover';
 import {
   Image as ImageIcon,
   Smile,
@@ -16,9 +17,11 @@ const PostComposer = ({ onPostCreate }) => {
   const { user } = useAuth();
   const { openVerificationModal } = usePost();
   const mediaInputRef = useRef(null);
+  const emojiButtonRef = useRef(null);
 
   const [postText, setPostText] = useState('');
   const [selectedMedia, setSelectedMedia] = useState([]); // Array of { file, previewUrl }
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const handleMediaSelect = (e) => {
     const files = Array.from(e.target.files || []);
@@ -48,6 +51,10 @@ const PostComposer = ({ onPostCreate }) => {
     });
   };
 
+  const handleEmojiClick = (emojiData) => {
+    setPostText((prev) => prev + emojiData.emoji);
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!postText.trim() && selectedMedia.length === 0) return;
@@ -57,6 +64,7 @@ const PostComposer = ({ onPostCreate }) => {
 
     setPostText('');
     setSelectedMedia([]);
+    setShowEmojiPicker(false);
   };
 
   return (
@@ -100,7 +108,7 @@ const PostComposer = ({ onPostCreate }) => {
           onChange={(e) => setPostText(e.target.value)}
           placeholder={user?.isVerified ? "What is happening?!" : "Verify your account to post on Cwitter..."}
           rows="3"
-          className="w-full bg-transparent text-white placeholder-gray-500 text-lg resize-none focus:outline-none"
+          className="w-full bg-transparent text-[#e7e9ea] placeholder-gray-500 text-lg resize-none focus:outline-none"
         ></textarea>
 
         {/* Local Instant Media Preview Carousel (Scrollable, Full Size) */}
@@ -146,9 +154,31 @@ const PostComposer = ({ onPostCreate }) => {
             <button type="button" className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors cursor-pointer" title="Poll">
               <BarChart2 className="w-5 h-5" />
             </button>
-            <button type="button" className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors cursor-pointer" title="Emoji">
+
+            {/* Emoji Picker Button */}
+            <button
+              ref={emojiButtonRef}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowEmojiPicker((prev) => !prev);
+              }}
+              className={`p-2 rounded-full transition-colors cursor-pointer ${
+                showEmojiPicker ? 'bg-[#1d9bf0]/20 text-[#1d9bf0]' : 'hover:bg-[#1d9bf0]/10 text-[#1d9bf0]'
+              }`}
+              title="Add emoji"
+            >
               <Smile className="w-5 h-5" />
             </button>
+
+            {/* Floating Portal Emoji Picker */}
+            <EmojiPickerPopover
+              isOpen={showEmojiPicker}
+              onClose={() => setShowEmojiPicker(false)}
+              onEmojiClick={handleEmojiClick}
+              triggerRef={emojiButtonRef}
+            />
+
             <button type="button" className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors cursor-pointer" title="Schedule">
               <Calendar className="w-5 h-5" />
             </button>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Pencil, Loader2, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, Pencil, Loader2, Image as ImageIcon, Smile, ChevronLeft, ChevronRight } from 'lucide-react';
 import { usePost } from '../../context/PostContext';
 import { getAvatarUrl } from '../../utils/constants';
+import EmojiPickerPopover from '../common/EmojiPickerPopover';
 
 const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-72" }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -22,7 +23,7 @@ const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-72" }) => {
           src={url}
           controls
           onLoadedData={() => setIsLoaded(true)}
-          className={`w-full h-full object-cover relative z-10 ${maxH} transition-opacity duration-300 ${
+          className={`w-full h-full object-cover relative z-0 ${maxH} transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
         />
@@ -31,7 +32,7 @@ const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-72" }) => {
           src={url}
           alt={alt || "post media"}
           onLoad={() => setIsLoaded(true)}
-          className={`w-full h-full object-cover relative z-10 ${maxH} transition-opacity duration-300 ${
+          className={`w-full h-full object-cover relative z-0 ${maxH} transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
         />
@@ -45,11 +46,13 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
   const mediaInputRef = useRef(null);
   const textareaRef = useRef(null);
   const carouselScrollRef = useRef(null);
+  const emojiButtonRef = useRef(null);
 
   const [content, setContent] = useState('');
   const [mediaItems, setMediaItems] = useState([]); // Array of { id, url, file, previewUrl, isExisting, isNew, type }
   const [removedUrls, setRemovedUrls] = useState([]); // Array of removed URL strings
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -57,6 +60,7 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
       setContent(post.content || '');
       setRemovedUrls([]);
       setActiveIndex(0);
+      setShowEmojiPicker(false);
 
       // Initialize media items from post.media array or post.image fallback
       const initialMedia = Array.isArray(post.media) && post.media.length > 0
@@ -94,13 +98,14 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
     if (!carouselScrollRef.current) return;
     const { scrollLeft, clientWidth } = carouselScrollRef.current;
     if (clientWidth > 0) {
-      const index = Math.round(scrollLeft / clientWidth);
+      const index = Math.round((scrollLeft + 10) / clientWidth);
       setActiveIndex(index);
     }
   };
 
   const scrollCarousel = (direction, e) => {
     e?.stopPropagation();
+    e?.preventDefault();
     if (!carouselScrollRef.current) return;
     const { clientWidth } = carouselScrollRef.current;
     const scrollAmount = direction === 'left' ? -clientWidth : clientWidth;
@@ -142,6 +147,10 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
     setActiveIndex((prev) => Math.max(0, prev - 1));
   };
 
+  const handleEmojiClick = (emojiData) => {
+    setContent((prev) => prev + emojiData.emoji);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if ((!content.trim() && mediaItems.length === 0) || loading) return;
@@ -149,6 +158,7 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
     setLoading(true);
     try {
       await editPost(postId, content.trim(), mediaItems, removedUrls, showToast);
+      setShowEmojiPicker(false);
       onClose();
     } catch (error) {
       console.error(error);
@@ -166,7 +176,7 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
         onClick={(e) => e.stopPropagation()}
         className="bg-black border border-[#2f3336] rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col animate-scale-up"
       >
-        {/* Hidden File Input for Adding Media (inside modal container to prevent backdrop trigger) */}
+        {/* Hidden File Input for Adding Media */}
         <input
           type="file"
           ref={mediaInputRef}
@@ -221,10 +231,9 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
                 >
                   {mediaItems.map((item, idx) => {
                     const displayUrl = item.url || item.previewUrl;
-                    const isVideo = item.type?.startsWith('video/') || (displayUrl && displayUrl.match(/\.(mp4|webm|mov)$/i));
 
                     return (
-                      <div key={item.id || idx} className="w-full shrink-0 snap-start relative max-h-72 flex items-center justify-center bg-black group">
+                      <div key={item.id || idx} className="w-full min-w-full shrink-0 snap-start relative max-h-72 flex items-center justify-center bg-black group">
                         <MediaImageWithSkeleton url={displayUrl} alt={`media item ${idx + 1}`} maxH="max-h-72" />
                         <button
                           type="button"
@@ -247,7 +256,7 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
                       <button
                         type="button"
                         onClick={(e) => scrollCarousel('left', e)}
-                        className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+                        className="absolute left-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/75 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-30 hover:scale-105"
                         title="Previous media"
                       >
                         <ChevronLeft className="w-5 h-5" />
@@ -259,7 +268,7 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
                       <button
                         type="button"
                         onClick={(e) => scrollCarousel('right', e)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/75 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-30 hover:scale-105"
                         title="Next media"
                       >
                         <ChevronRight className="w-5 h-5" />
@@ -267,7 +276,7 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
                     )}
 
                     {/* Page Counter Badge */}
-                    <div className="absolute top-2.5 left-2.5 bg-black/70 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-xs font-semibold text-white pointer-events-none z-10">
+                    <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-xs px-2.5 py-0.5 rounded-full text-xs font-semibold text-white pointer-events-none z-30">
                       {activeIndex + 1} / {mediaItems.length}
                     </div>
                   </>
@@ -277,7 +286,7 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
 
             {/* Modal Actions Footer */}
             <div className="flex items-center justify-between pt-4 border-t border-[#2f3336]/60 mt-2">
-              <div className="flex items-center space-x-2 text-[#1d9bf0]">
+              <div className="flex items-center space-x-1 text-[#1d9bf0]">
                 <button
                   type="button"
                   onClick={(e) => {
@@ -294,7 +303,31 @@ const EditPostModal = ({ isOpen, onClose, post, showToast }) => {
                   )}
                 </button>
 
-                <span className={`text-xs ${remainingChars < 20 ? 'text-red-400 font-bold' : 'text-gray-500'}`}>
+                {/* Emoji Picker Button */}
+                <button
+                  ref={emojiButtonRef}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowEmojiPicker((prev) => !prev);
+                  }}
+                  className={`p-2 rounded-full transition-colors cursor-pointer ${
+                    showEmojiPicker ? 'bg-[#1d9bf0]/20 text-[#1d9bf0]' : 'hover:bg-[#1d9bf0]/10 text-[#1d9bf0]'
+                  }`}
+                  title="Add emoji"
+                >
+                  <Smile className="w-5 h-5" />
+                </button>
+
+                {/* Floating Portal Emoji Picker (Renders outside modal container to avoid overflow clipping) */}
+                <EmojiPickerPopover
+                  isOpen={showEmojiPicker}
+                  onClose={() => setShowEmojiPicker(false)}
+                  onEmojiClick={handleEmojiClick}
+                  triggerRef={emojiButtonRef}
+                />
+
+                <span className={`text-xs ml-2 ${remainingChars < 20 ? 'text-red-400 font-bold' : 'text-gray-500'}`}>
                   {remainingChars}
                 </span>
               </div>
