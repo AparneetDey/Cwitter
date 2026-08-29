@@ -532,7 +532,7 @@ const Profile = () => {
                 className={`px-5 py-2 rounded-full font-bold text-sm transition-all cursor-pointer ${
                   user?.isFollowing
                     ? 'bg-transparent border border-[#2f3336] text-white hover:border-red-600 hover:text-red-500'
-                    : 'cwitter-btn-secondary !px-5 !py-2 !text-sm'
+                    : 'cwitter-btn-secondary px-5! py-2! text-sm!'
                 }`}
               >
                 {user?.isFollowing ? 'Following' : 'Follow'}
@@ -620,7 +620,7 @@ const Profile = () => {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm relative hover:bg-[#181818] transition-colors cursor-pointer shrink-0 px-4 min-w-[75px] ${
+              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm relative hover:bg-[#181818] transition-colors cursor-pointer shrink-0 px-4 min-w-18.75 ${
                 activeTab === tab.id ? 'text-white font-extrabold' : 'text-gray-500'
               }`}
             >
