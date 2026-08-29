@@ -200,12 +200,24 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
             {post?.content}
           </p>
 
-          {/* Post Image Attachment */}
-          {post?.image && (
+          {/* Post Media Attachments (Images & Videos) */}
+          {(Array.isArray(post?.media) && post.media.length > 0) ? (
+            <div className="mt-2 space-y-2">
+              {post.media.map((url, idx) => (
+                <div key={idx} className="rounded-2xl overflow-hidden border border-[#2f3336] max-h-96">
+                  {url.match(/\.(mp4|webm|mov)$/i) ? (
+                    <video src={url} controls className="w-full h-full object-cover" />
+                  ) : (
+                    <img src={url} alt={`post media ${idx}`} className="w-full h-full object-cover" />
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : post?.image ? (
             <div className="mt-2 rounded-2xl overflow-hidden border border-[#2f3336] max-h-96">
               <img src={post?.image} alt="post media" className="w-full h-full object-cover" />
             </div>
-          )}
+          ) : null}
 
           {/* Action Buttons Row */}
           <div className="flex items-center justify-between text-gray-500 max-w-md pt-2 text-xs">

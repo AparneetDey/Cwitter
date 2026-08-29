@@ -30,7 +30,7 @@ export const PostProvider = ({ children }) => {
   }, []);
 
   // Create Post Action in Context (Checks isVerified & handles 401 unverified error)
-  const createPost = useCallback(async (content, showToast) => {
+  const createPost = useCallback(async (content, media = [], showToast) => {
     if (!content || !content.trim()) return null;
 
     if (!user?.isVerified) {
@@ -40,8 +40,20 @@ export const PostProvider = ({ children }) => {
     }
 
     try {
-      const res = await api.post('/tweets/', { content: content.trim() });
+      const res = await api.post('/tweets/', { content: content.trim(), media });
       const createdTweet = res?.data?.data;
+
+      // Register Media document entries via Media API controller
+      if (createdTweet?._id && Array.isArray(media) && media.length > 0) {
+        for (const url of media) {
+          try {
+            await api.post(`/media/add/${createdTweet._id}`, { url });
+          } catch (mErr) {
+            console.warn('Failed to register media doc:', mErr);
+          }
+        }
+      }
+
       triggerToast(showToast, 'Your post was sent!');
       refreshFeed();
       return createdTweet;

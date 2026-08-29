@@ -224,12 +224,24 @@ const PostDetails = () => {
               {post?.content}
             </p>
 
-            {/* Post Image Attachment */}
-            {post?.image && (
+            {/* Post Media Attachments (Images & Videos) */}
+            {(Array.isArray(post?.media) && post.media.length > 0) ? (
+              <div className="space-y-3">
+                {post.media.map((url, idx) => (
+                  <div key={idx} className="rounded-2xl overflow-hidden border border-[#2f3336] max-h-112">
+                    {url.match(/\.(mp4|webm|mov)$/i) ? (
+                      <video src={url} controls className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={url} alt={`post media ${idx}`} className="w-full h-full object-cover" />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : post?.image ? (
               <div className="rounded-2xl overflow-hidden border border-[#2f3336] max-h-112">
                 <img src={post?.image} alt="post media" className="w-full h-full object-cover" />
               </div>
-            )}
+            ) : null}
 
             {/* Timestamp & Meta Row */}
             <div className="py-3 border-y border-[#2f3336] text-gray-500 text-sm flex items-center space-x-2">

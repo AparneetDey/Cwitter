@@ -5,19 +5,24 @@ import { Media } from "../models/media.model.js";
 import { Tweet } from "../models/tweet.model.js";
 
 const addAMedia = asyncHandler(async (req, res) => {
-    const {url} = req.body;
+    const { url } = req.body;
 
-    if(!url) throw new ApiError(400, "Media URL is required");
+    if (!url) throw new ApiError(400, "Media URL is required");
 
-    const {tweetId} = req.params;
+    const { tweetId } = req.params;
 
-    if(!tweetId || tweetId.trim() === "") throw new ApiError(400, "Tweet id is required");
+    if (!tweetId || tweetId.trim() === "") throw new ApiError(400, "Tweet id is required");
 
     const media = await Media.create({
         url,
         tweet: tweetId,
         owner: req?.user?._id
-    })
+    });
+
+    // Also push the media URL into the Tweet document's media array
+    await Tweet.findByIdAndUpdate(tweetId, {
+        $push: { media: url }
+    });
 
     res
     .status(201)
@@ -27,32 +32,28 @@ const addAMedia = asyncHandler(async (req, res) => {
             media,
             "Tweet media created successfully"
         )
-    )
-})
+    );
+});
 
 const deleteAMedia = asyncHandler(async (req, res) => {
-    const {mediaId} = req.params;
+    const { mediaId } = req.params;
 
-    if(!mediaId || mediaId.trim() === "") throw new ApiError(400, "Media id is required");
+    if (!mediaId || mediaId.trim() === "") throw new ApiError(400, "Media id is required");
 
     const existedMedia = await Media.findById(mediaId);
 
-    if(!existedMedia) throw new ApiError(404, "Media not found");
+    if (!existedMedia) throw new ApiError(404, "Media not found");
 
-    if(!existedMedia.isOwner(req?.user?._id)) throw new ApiError(409, "Unauthorized action");
+    if (!existedMedia.isOwner(req?.user?._id)) throw new ApiError(409, "Unauthorized action");
 
-    const deletedResponse = await Media.deleteOne({_id: mediaId});
+    const deletedResponse = await Media.deleteOne({ _id: mediaId });
 
-    if(!deletedResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting the media");
+    if (!deletedResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting the media");
 
-    await Tweet.updateMany(
-        { tweet: tweetId },
-        {
-            $pull: {
-                media: mediaId
-            }
-        }
-    );
+    // Pull the media URL from the associated Tweet
+    await Tweet.findByIdAndUpdate(existedMedia.tweet, {
+        $pull: { media: existedMedia.url }
+    });
 
     res
     .status(200)
@@ -62,33 +63,41 @@ const deleteAMedia = asyncHandler(async (req, res) => {
             {},
             "Media deleted successfully"
         )
-    )
-})
+    );
+});
 
 const deleteTweetMedia = asyncHandler(async (req, res) => {
-    const {tweetId} = req.params;
+    const { tweetId } = req.params;
 
-    if(!tweetId || tweetId.trim() === "") throw new ApiError(400, "Tweet id is required");
+    if (!tweetId || tweetId.trim() === "") throw new ApiError(400, "Tweet id is required");
 
     const existedTweet = await Tweet.findById(tweetId);
 
-    if(!existedTweet.isOwner(req?.user?._id)) throw new ApiError(409, "Unauthorized request");
+    if (!existedTweet) throw new ApiError(404, "Tweet not found");
 
-    const deletedResponse = await Media.deleteMany({tweet: tweetId});
+    if (!existedTweet.isOwner(req?.user?._id)) throw new ApiError(409, "Unauthorized request");
 
-    if(!deletedResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting tweet media");
+    const deletedResponse = await Media.deleteMany({ tweet: tweetId });
+
+    if (!deletedResponse.acknowledged) throw new ApiError(500, "Something went wrong while deleting tweet media");
+
+    // Also clear media array from Tweet document
+    existedTweet.media = [];
+    await existedTweet.save();
 
     res
     .status(200)
     .json(
-        200,
-        {},
-        "Tweet media deleted successfully"
-    )
-})
+        new ApiResponse(
+            200,
+            {},
+            "Tweet media deleted successfully"
+        )
+    );
+});
 
 export {
     addAMedia,
     deleteAMedia,
     deleteTweetMedia
-}
+};
