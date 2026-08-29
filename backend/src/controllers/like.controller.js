@@ -11,7 +11,7 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
 
     const existingTweet = await Tweet.findById(tweetId);
 
-    if(!tweetId) throw new ApiError(404, "Tweet does not exists");
+    if(!existingTweet) throw new ApiError(404, "Tweet does not exist");
 
     const isTweetLiked = await Like.findOne(
         {
