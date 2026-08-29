@@ -28,6 +28,7 @@ import userRouter from "./routes/user.route.js";
 import tweetRouter from "./routes/tweet.route.js";
 import followRouter from "./routes/follow.route.js";
 import mediaRouter from "./routes/media.route.js";
+import likeRouter from "./routes/like.route.js";
 
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/imagekit", imagekitRouter);
@@ -35,6 +36,7 @@ app.use("/api/v1/users", userRouter);
 app.use("/api/v1/tweets", tweetRouter);
 app.use("/api/v1/follows", followRouter);
 app.use("/api/v1/medias", mediaRouter);
+app.use("/api/v1/likes", likeRouter);
 
 // Error handler middleware
 import { errorHandler } from "./utils/errorHandler.js";

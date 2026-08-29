@@ -194,27 +194,90 @@ export const PostProvider = ({ children }) => {
     }
   }, [user, openVerificationModal, refreshFeed]);
 
-  // Toggle Like Action
-  const toggleLike = useCallback((postId, setPosts) => {
-    if (!setPosts) return;
+  // Toggle Like Action (optimistic UI update + API endpoint call with verification check)
+  const toggleLike = useCallback(async (postId, setPosts, showToast = null) => {
+    if (!user?.isVerified) {
+      triggerToast(showToast, 'Account verification required to like posts.');
+      openVerificationModal();
+      return;
+    }
 
-    setPosts((prevPosts) =>
-      prevPosts
-        ? prevPosts.map((post) => {
-            const id = post._id || post.id;
-            if (String(id) === String(postId)) {
-              const isLiked = !post.isLiked;
-              return {
-                ...post,
-                isLiked,
-                likes: isLiked ? (post.likes || 0) + 1 : Math.max(0, (post.likes || 1) - 1),
-              };
-            }
-            return post;
-          })
-        : prevPosts
-    );
-  }, []);
+    let nextLikedState = false;
+
+    if (setPosts) {
+      setPosts((prevPosts) =>
+        prevPosts
+          ? prevPosts.map((post) => {
+              const id = post._id || post.id;
+              if (String(id) === String(postId)) {
+                nextLikedState = !post.isLiked;
+                const currentLikes =
+                  typeof post.totalLikes === 'number'
+                    ? post.totalLikes
+                    : typeof post.likes === 'number'
+                    ? post.likes
+                    : Array.isArray(post.likes)
+                    ? post.likes.length
+                    : 0;
+
+                const nextLikes = nextLikedState ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+
+                return {
+                  ...post,
+                  isLiked: nextLikedState,
+                  totalLikes: nextLikes,
+                  likes: nextLikes,
+                };
+              }
+              return post;
+            })
+          : prevPosts
+      );
+    }
+
+    try {
+      const res = await api.put(`/likes/tweet/${postId}`);
+      triggerToast(showToast, res?.data?.message || (nextLikedState ? 'Liked' : 'Unliked'));
+    } catch (error) {
+      // Revert optimistic update on error
+      if (setPosts) {
+        setPosts((prevPosts) =>
+          prevPosts
+            ? prevPosts.map((post) => {
+                const id = post._id || post.id;
+                if (String(id) === String(postId)) {
+                  const revertedLikedState = !nextLikedState;
+                  const currentLikes =
+                    typeof post.totalLikes === 'number'
+                      ? post.totalLikes
+                      : typeof post.likes === 'number'
+                      ? post.likes
+                      : 0;
+
+                  const revertedLikes = revertedLikedState ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+
+                  return {
+                    ...post,
+                    isLiked: revertedLikedState,
+                    totalLikes: revertedLikes,
+                    likes: revertedLikes,
+                  };
+                }
+                return post;
+              })
+            : prevPosts
+        );
+      }
+
+      const msg = error?.response?.data?.message || 'Failed to toggle like';
+      if (msg.includes('not verified')) {
+        triggerToast(showToast, 'Account verification required to like posts.');
+        openVerificationModal();
+      } else {
+        triggerToast(showToast, msg);
+      }
+    }
+  }, [user, openVerificationModal]);
 
   // Toggle Retweet Action (optimistic state toggle + API endpoint trigger with isVerified check)
   const toggleRetweet = useCallback(async (postId, setPosts, showToast) => {

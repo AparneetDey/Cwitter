@@ -134,6 +134,33 @@ const getATweet = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "tweetLikes",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            likedBy: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                likes: {
+                    $map: {
+                        input: "$tweetLikes",
+                        as: "like",
+                        in: "$$like.likedBy"
+                    }
+                }
+            }
+        },
+        {
             $addFields: {
                 isRetweeted: {
                     $in: [
@@ -152,12 +179,23 @@ const getATweet = asyncHandler(async (req, res) => {
                         "$_id",
                         req?.user?.bookmarks
                     ]
+                },
+                totalLikes: {
+                    $size: "$likes"
+                },
+                isLiked: {
+                    $in: [
+                        req?.user?._id,
+                        "$likes"
+                    ]
                 }
             }
         },
         {
             $project: {
                 retweets: 0,
+                tweetLikes: 0,
+                likes: 0
             }
         }
     ]);
@@ -279,6 +317,33 @@ const getUserTweets = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "tweetLikes",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            likedBy: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                likes: {
+                    $map: {
+                        input: "$tweetLikes",
+                        as: "like",
+                        in: "$$like.likedBy"
+                    }
+                }
+            }
+        },
+        {
             $addFields: {
                 isRetweeted: {
                     $in: [
@@ -297,6 +362,15 @@ const getUserTweets = asyncHandler(async (req, res) => {
                         "$_id",
                         req?.user?.bookmarks
                     ]
+                },
+                totalLikes: {
+                    $size: "$likes"
+                },
+                isLiked: {
+                    $in: [
+                        req?.user?._id,
+                        "$likes"
+                    ]
                 }
             }
         },
@@ -308,6 +382,8 @@ const getUserTweets = asyncHandler(async (req, res) => {
         {
             $project: {
                 retweets: 0,
+                tweetLikes: 0,
+                likes: 0
             }
         }
     ]
@@ -351,10 +427,36 @@ const getUserFeed = asyncHandler(async (req, res) => {
                             fullName: 1,
                             avatar: 1,
                             isVerified: 1,
-                            bookmarks: 1
                         }
                     }
                 ]
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "tweetLikes",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            likedBy: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                likes: {
+                    $map: {
+                        input: "$tweetLikes",
+                        as: "like",
+                        in: "$$like.likedBy"
+                    }
+                }
             }
         },
         {
@@ -376,18 +478,30 @@ const getUserFeed = asyncHandler(async (req, res) => {
                         "$_id",
                         req?.user?.bookmarks
                     ]
+                },
+                totalLikes: {
+                    $size: "$likes"
+                },
+                isLiked: {
+                    $in: [
+                        req?.user?._id,
+                        "$likes"
+                    ]
                 }
             }
         },
         {
             $sort: {
                 createdAt: -1,
-                totalRetweets: -1
+                totalRetweets: -1,
+                totalLikes: -1
             }
         },
         {
             $project: {
                 retweets: 0,
+                tweetLikes: 0,
+                likes: 0
             }
         }
     ]
@@ -454,10 +568,36 @@ const getUserFollowingFeed = asyncHandler(async (req, res) => {
                             fullName: 1,
                             avatar: 1,
                             isVerified: 1,
-                            bookmarks: 1
                         }
                     }
                 ]
+            }
+        },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "tweetLikes",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            likedBy: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                likes: {
+                    $map: {
+                        input: "$tweetLikes",
+                        as: "like",
+                        in: "$$like.likedBy"
+                    }
+                }
             }
         },
         {
@@ -479,18 +619,30 @@ const getUserFollowingFeed = asyncHandler(async (req, res) => {
                         "$_id",
                         req?.user?.bookmarks
                     ]
+                },
+                totalLikes: {
+                    $size: "$likes",
+                },
+                isLiked: {
+                    $in: [
+                        req?.user?._id,
+                        "$likes"
+                    ]
                 }
             }
         },
         {
             $sort: {
                 createdAt: -1,
-                totalRetweets: -1
+                totalRetweets: -1,
+                totalLikes: -1
             }
         },
         {
             $project: {
                 retweets: 0,
+                tweetLikes: 0,
+                likes: 0
             }
         }
     ]

@@ -148,7 +148,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
   const ownerId = post?.owner?._id || post?.owner || post?.author?._id || post?.author?.id;
   const isOwner = currentUser?._id && String(currentUser._id) === String(ownerId);
 
-  // Robust calculation for initial and dynamic retweet count
+  // Robust calculation for initial and dynamic retweet & like counts
   const retweetCount =
     typeof post?.totalRetweets === 'number'
       ? post.totalRetweets
@@ -156,6 +156,15 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
       ? post.retweets
       : Array.isArray(post?.retweets)
       ? post.retweets.length
+      : 0;
+
+  const likeCount =
+    typeof post?.totalLikes === 'number'
+      ? post.totalLikes
+      : typeof post?.likes === 'number'
+      ? post.likes
+      : Array.isArray(post?.likes)
+      ? post.likes.length
       : 0;
 
   // Close dropdown menu on click outside
@@ -180,7 +189,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
 
   const handleLikeClick = (e) => {
     e.stopPropagation();
-    toggleLike(postId, setPosts);
+    toggleLike(postId, setPosts, showToast);
   };
 
   const handleRetweetClick = (e) => {
@@ -358,7 +367,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
               <div className="p-2 rounded-full group-hover:bg-rose-500/10">
                 <Heart className={`w-4 h-4 ${post?.isLiked ? 'fill-current text-rose-500' : ''}`} />
               </div>
-              <span>{formatNumber(post?.likes || 0)}</span>
+              <span>{formatNumber(likeCount)}</span>
             </button>
 
             {/* Views */}

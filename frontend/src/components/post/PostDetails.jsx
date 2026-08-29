@@ -170,7 +170,7 @@ const PostDetails = () => {
   const ownerId = post?.owner?._id || post?.owner || post?.author?._id;
   const isOwner = currentUser?._id && String(currentUser._id) === String(ownerId);
 
-  // Robust calculation for initial and dynamic retweet count
+  // Robust calculation for initial and dynamic retweet & like counts
   const retweetCount =
     typeof post?.totalRetweets === 'number'
       ? post.totalRetweets
@@ -178,6 +178,15 @@ const PostDetails = () => {
       ? post.retweets
       : Array.isArray(post?.retweets)
       ? post.retweets.length
+      : 0;
+
+  const likeCount =
+    typeof post?.totalLikes === 'number'
+      ? post.totalLikes
+      : typeof post?.likes === 'number'
+      ? post.likes
+      : Array.isArray(post?.likes)
+      ? post.likes.length
       : 0;
 
   const handleProfileClick = (e) => {
@@ -188,7 +197,7 @@ const PostDetails = () => {
   };
 
   const handleLikeClick = () => {
-    toggleLike(postId, setPostSingle);
+    toggleLike(postId, setPostSingle, showToast);
   };
 
   const setPostSingle = (updater) => {
@@ -357,16 +366,16 @@ const PostDetails = () => {
             </div>
 
             {/* Engagement Stats Breakdown */}
-            {(retweetCount > 0 || post?.likes > 0) && (
+            {(retweetCount > 0 || likeCount > 0) && (
               <div className="py-3 border-b border-[#2f3336] flex items-center space-x-6 text-sm">
                 {retweetCount > 0 && (
                   <span className="text-gray-500">
                     <strong className="text-white font-bold">{formatNumber(retweetCount)}</strong> Retweets
                   </span>
                 )}
-                {post?.likes > 0 && (
+                {likeCount > 0 && (
                   <span className="text-gray-500">
-                    <strong className="text-white font-bold">{formatNumber(post.likes)}</strong> Likes
+                    <strong className="text-white font-bold">{formatNumber(likeCount)}</strong> Likes
                   </span>
                 )}
               </div>
