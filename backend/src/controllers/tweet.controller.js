@@ -5,7 +5,7 @@ import { Tweet } from "../models/tweet.model.js";
 import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { deleteTweetMedia } from "./media.controller.js";
-import { Follow } from "../models/follow.model.js";
+import { Media } from "../models/media.model.js";
 
 const createATweet = asyncHandler(async (req, res) => {
     const {content, media = []} = req.body;
@@ -14,12 +14,25 @@ const createATweet = asyncHandler(async (req, res) => {
 
     const createdTweet = await Tweet.create({
         content,
-        media,
+        media: [],
         owner: req?.user?._id,
         retweets: []
-    })
+    });
 
     if(!createdTweet) throw new ApiError(500, "Something went wrong while creating tweet");
+
+    // Automatically create Media document entries in DB if media URLs are attached
+    // if (Array.isArray(media) && media.length > 0) {
+    //     for (const url of media) {
+    //         if (url && typeof url === 'string') {
+    //             await Media.create({
+    //                 url,
+    //                 tweet: createdTweet._id,
+    //                 owner: req?.user?._id
+    //             });
+    //         }
+    //     }
+    // }
 
     res
     .status(201)
@@ -29,8 +42,8 @@ const createATweet = asyncHandler(async (req, res) => {
             createdTweet,
             "Tweet created successfully"
         )
-    )
-})
+    );
+});
 
 const deleteATweet = asyncHandler(async (req, res) => {
     const {tweetId} = req.params;
@@ -123,7 +136,22 @@ const getATweet = asyncHandler(async (req, res) => {
                             fullName: 1,
                             avatar: 1,
                             isVerified: 1,
-                            bookmarks: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "medias",
+                localField: "media",
+                foreignField: "_id",
+                as: "media",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            url: 1
                         }
                     }
                 ]
@@ -158,7 +186,7 @@ const getATweet = asyncHandler(async (req, res) => {
         }
     ]);
 
-    if(!tweet) throw new ApiError(404, "Tweet does not exist");
+    if(tweet.length === 0) throw new ApiError(404, "Tweet does not exist");
 
     res
     .status(200)

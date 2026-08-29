@@ -30,7 +30,8 @@ export const PostProvider = ({ children }) => {
   }, []);
 
   // Create Post Action in Context (Checks isVerified & handles 401 unverified error)
-  const createPost = useCallback(async (content, media = [], showToast) => {
+  const createPost = useCallback(async (content, media = [], showToast = null) => {
+
     if (!content || !content.trim()) return null;
 
     if (!user?.isVerified) {
@@ -47,7 +48,7 @@ export const PostProvider = ({ children }) => {
       if (createdTweet?._id && Array.isArray(media) && media.length > 0) {
         for (const url of media) {
           try {
-            await api.post(`/media/add/${createdTweet._id}`, { url });
+            await api.post(`/medias/add/${createdTweet._id}`, { url });
           } catch (mErr) {
             console.warn('Failed to register media doc:', mErr);
           }

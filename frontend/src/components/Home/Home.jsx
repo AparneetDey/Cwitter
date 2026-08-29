@@ -11,9 +11,9 @@ const Home = () => {
   const { showToast } = useOutletContext() || {};
   const [activeTab, setActiveTab] = useState('forYou');
 
-  const handlePostCreate = async (text) => {
+  const handlePostCreate = async (text, mediaList) => {
     try {
-      await createPost(text, showToast);
+      await createPost(text, mediaList, showToast);
     } catch (error) {
       console.error(error);
     }

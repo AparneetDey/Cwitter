@@ -9,7 +9,8 @@ const tweetSchema = new Schema(
         },
         media: [
             {
-                type: String, // url from imageKit
+                type: Schema.Types.ObjectId,
+                ref: "Media"
             }
         ],
         owner: {

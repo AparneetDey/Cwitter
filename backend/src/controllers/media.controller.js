@@ -21,7 +21,7 @@ const addAMedia = asyncHandler(async (req, res) => {
 
     // Also push the media URL into the Tweet document's media array
     await Tweet.findByIdAndUpdate(tweetId, {
-        $push: { media: url }
+        $push: { media: media._id }
     });
 
     res
@@ -52,7 +52,7 @@ const deleteAMedia = asyncHandler(async (req, res) => {
 
     // Pull the media URL from the associated Tweet
     await Tweet.findByIdAndUpdate(existedMedia.tweet, {
-        $pull: { media: existedMedia.url }
+        $pull: { media: existedMedia._id }
     });
 
     res
