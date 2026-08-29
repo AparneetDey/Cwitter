@@ -5,6 +5,7 @@ import { Tweet } from "../models/tweet.model.js";
 import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { Media } from "../models/media.model.js";
+import { Follow } from "../models/follow.model.js";
 
 const createATweet = asyncHandler(async (req, res) => {
     const {content, media = []} = req.body;
