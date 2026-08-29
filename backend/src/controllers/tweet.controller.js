@@ -5,6 +5,7 @@ import { Tweet } from "../models/tweet.model.js";
 import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { deleteTweetMedia } from "./media.controller.js";
+import { Follow } from "../models/follow.model.js";
 
 const createATweet = asyncHandler(async (req, res) => {
     const {content, media = []} = req.body;
@@ -409,6 +410,111 @@ const getUserFeed = asyncHandler(async (req, res) => {
     )
 })
 
+const getUserFollowingFeed = asyncHandler(async (req, res) => {
+    const {page = 1, limit = 15} = req.query;
+
+    const followings = await Follow.distinct(
+        "following",
+        {
+            follower: req.user._id
+        }
+    );
+
+    console.log(followings);
+
+    const pipeline = [
+        {
+            $match: {
+                $or: [
+                    {
+                        owner: {
+                            $in: followings
+                        }
+                    },
+                    {
+                        retweets: {
+                            $in: followings
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1,
+                            isVerified: 1,
+                            bookmarks: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $addFields: {
+                totalRetweets: {
+                    $size: "$retweets"
+                },
+                isRetweeted: {
+                    $in: [
+                        req?.user?._id,
+                        "$retweets"
+                    ]
+                },
+                owner: {
+                    $first: "$owner"
+                },
+                isBookmarked: {
+                    $in: [
+                        "$_id",
+                        req?.user?.bookmarks
+                    ]
+                }
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1,
+                totalRetweets: -1
+            }
+        },
+        {
+            $project: {
+                retweets: 0,
+            }
+        }
+    ]
+
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "tweets",
+            totalDocs: "totalTweets"
+        }
+    }
+
+    const feed = await Tweet.aggregatePaginate(Tweet.aggregate(pipeline), paginateOptions);
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(
+            200,
+            feed,
+            "For you feed fetched successfully"
+        )
+    )
+})
+
 export {
     createATweet,
     deleteATweet,
@@ -417,5 +523,6 @@ export {
     toggleTweetToUserBookmark,
     toggleRetweet,
     getUserTweets,
-    getUserFeed
+    getUserFeed,
+    getUserFollowingFeed
 }
