@@ -42,7 +42,7 @@ const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-120" }) => {
           src={url}
           controls
           onLoadedData={() => setIsLoaded(true)}
-          className={`w-full h-full object-cover relative z-10 ${maxH} transition-opacity duration-300 ${
+          className={`w-full h-full object-cover relative z-0 ${maxH} transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
         />
@@ -51,7 +51,7 @@ const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-120" }) => {
           src={url}
           alt={alt || "post media"}
           onLoad={() => setIsLoaded(true)}
-          className={`w-full h-full object-cover relative z-10 ${maxH} transition-opacity duration-300 ${
+          className={`w-full h-full object-cover relative z-0 ${maxH} transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'
           }`}
         />
@@ -68,13 +68,14 @@ const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
     if (!scrollRef.current) return;
     const { scrollLeft, clientWidth } = scrollRef.current;
     if (clientWidth > 0) {
-      const index = Math.round(scrollLeft / clientWidth);
+      const index = Math.round((scrollLeft + 10) / clientWidth);
       setActiveIndex(index);
     }
   };
 
   const scroll = (direction, e) => {
     e?.stopPropagation();
+    e?.preventDefault();
     if (!scrollRef.current) return;
     const { clientWidth } = scrollRef.current;
     const scrollAmount = direction === 'left' ? -clientWidth : clientWidth;
@@ -91,7 +92,7 @@ const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
         className={`flex overflow-x-auto snap-x snap-mandatory scrollbar-none ${maxH}`}
       >
         {media.map((url, idx) => (
-          <div key={idx} className={`w-full shrink-0 snap-start ${maxH} flex items-center justify-center bg-black`}>
+          <div key={idx} className={`w-full min-w-full shrink-0 snap-start ${maxH} flex items-center justify-center bg-black`}>
             <MediaImageWithSkeleton url={url} alt={`post media ${idx + 1}`} maxH={maxH} />
           </div>
         ))}
@@ -105,7 +106,7 @@ const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
             <button
               type="button"
               onClick={(e) => scroll('left', e)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+              className="absolute left-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/75 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-30 hover:scale-105"
               title="Previous media"
             >
               <ChevronLeft className="w-5 h-5" />
@@ -117,7 +118,7 @@ const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
             <button
               type="button"
               onClick={(e) => scroll('right', e)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/70 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-10 hover:scale-105"
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2.5 rounded-full bg-black/75 hover:bg-black text-white transition-all shadow-lg cursor-pointer z-30 hover:scale-105"
               title="Next media"
             >
               <ChevronRight className="w-5 h-5" />
@@ -125,7 +126,7 @@ const MediaCarousel = ({ media, maxH = "max-h-120" }) => {
           )}
 
           {/* Page Counter Badge */}
-          <div className="absolute top-3 right-3 bg-black/70 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-semibold text-white pointer-events-none z-10">
+          <div className="absolute top-3 right-3 bg-black/75 backdrop-blur-xs px-3 py-1 rounded-full text-xs font-semibold text-white pointer-events-none z-30">
             {activeIndex + 1} / {media.length}
           </div>
         </>

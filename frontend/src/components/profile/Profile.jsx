@@ -14,7 +14,8 @@ import {
   MapPin,
   CheckCircle2,
   Edit3,
-  ShieldCheck
+  ShieldCheck,
+  Image as ImageIcon
 } from 'lucide-react';
 import { getAvatarUrl } from '../../utils/constants';
 import GithubIcon from '../../elements/GithubIcon';
@@ -42,6 +43,11 @@ const Profile = () => {
   const [postsPage, setPostsPage] = useState(1);
   const [postsHasNext, setPostsHasNext] = useState(false);
   const [loadingMorePosts, setLoadingMorePosts] = useState(false);
+
+  const [mediaList, setMediaList] = useState(null);
+  const [mediaPage, setMediaPage] = useState(1);
+  const [mediaHasNext, setMediaHasNext] = useState(false);
+  const [loadingMoreMedia, setLoadingMoreMedia] = useState(false);
 
   const [followersList, setFollowersList] = useState(null);
   const [followersPage, setFollowersPage] = useState(1);
@@ -103,6 +109,37 @@ const Profile = () => {
     } finally {
       setTabLoading(false);
       setLoadingMorePosts(false);
+    }
+  }, [userId, showToast]);
+
+  // Fetch User Media URLs from /medias/user/:userId
+  const getUserMediaList = useCallback(async (pageToFetch = 1) => {
+    if (pageToFetch === 1) {
+      setTabLoading(true);
+    } else {
+      setLoadingMoreMedia(true);
+    }
+
+    try {
+      const res = await api.get(`medias/user/${userId}?page=${pageToFetch}&limit=15`);
+      const data = res.data?.data;
+      const docs = data?.medias || [];
+      const hasNext = Boolean(data?.hasNextPage);
+
+      if (pageToFetch === 1) {
+        setMediaList(docs);
+      } else {
+        setMediaList((prev) => [...(prev || []), ...docs]);
+      }
+
+      setMediaHasNext(hasNext);
+      setMediaPage(pageToFetch);
+    } catch (error) {
+      if (showToast) showToast(error?.response?.data?.message || "Failed to fetch user media");
+      if (pageToFetch === 1) setMediaList([]);
+    } finally {
+      setTabLoading(false);
+      setLoadingMoreMedia(false);
     }
   }, [userId, showToast]);
 
@@ -171,6 +208,7 @@ const Profile = () => {
   // Load dashboard overview when userId changes & reset tab caches
   useEffect(() => {
     setPosts(null);
+    setMediaList(null);
     setFollowersList(null);
     setFollowingList(null);
     setActiveTab('posts');
@@ -180,13 +218,15 @@ const Profile = () => {
   // Optimized lazy-fetching: fetch data for activeTab ONLY if not already fetched
   useEffect(() => {
     if (activeTab === 'posts' && posts === null) {
-      getUserTweets();
+      getUserTweets(1);
+    } else if (activeTab === 'media' && mediaList === null) {
+      getUserMediaList(1);
     } else if (activeTab === 'followers' && followersList === null) {
-      getUserFollowers();
+      getUserFollowers(1);
     } else if (activeTab === 'following' && followingList === null) {
-      getUserFollowings();
+      getUserFollowings(1);
     }
-  }, [activeTab, posts, followersList, followingList, getUserTweets, getUserFollowers, getUserFollowings]);
+  }, [activeTab, posts, mediaList, followersList, followingList, getUserTweets, getUserMediaList, getUserFollowers, getUserFollowings]);
 
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
@@ -325,6 +365,52 @@ const Profile = () => {
             hasNextPage={postsHasNext}
             onLoadMore={() => getUserTweets(postsPage + 1)}
           />
+        );
+      case 'media':
+        if (!mediaList || mediaList.length === 0) {
+          return (
+            <div className="flex flex-col items-center justify-center px-6 py-20 text-center max-w-sm mx-auto select-none">
+              <div className="w-16 h-16 rounded-full bg-[#1d9bf0]/10 flex items-center justify-center text-[#1d9bf0] mb-6 border border-[#1d9bf0]/20">
+                <ImageIcon className="w-8 h-8" />
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">Lights, camera... attachment!</h3>
+              <p className="text-gray-500 text-sm leading-relaxed">
+                When @{user?.username} posts photos or videos, they will show up here.
+              </p>
+            </div>
+          );
+        }
+        return (
+          <div className="p-2 bg-black">
+            <div className="grid grid-cols-3 gap-1.5">
+              {mediaList.map((item, idx) => {
+                const url = typeof item === 'string' ? item : item.url;
+                const tweetId = typeof item === 'object' ? (item.tweetId || item.tweet?._id) : null;
+                const isVideo = url?.match(/\.(mp4|webm|mov)$/i);
+
+                return (
+                  <div
+                    key={item._id || idx}
+                    onClick={() => {
+                      if (tweetId) navigate(`/post/${tweetId}`);
+                    }}
+                    className="relative aspect-square rounded-xl overflow-hidden bg-[#16181c] group cursor-pointer hover:opacity-90 transition-all border border-[#2f3336]/40"
+                  >
+                    {isVideo ? (
+                      <video src={url} className="w-full h-full object-cover" />
+                    ) : (
+                      <img src={url} alt={`user media ${idx + 1}`} className="w-full h-full object-cover" />
+                    )}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-xs font-bold text-white bg-black/75 backdrop-blur-xs px-3 py-1 rounded-full border border-white/20">
+                        View Post
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         );
       default:
         return (
@@ -522,17 +608,24 @@ const Profile = () => {
         </div>
 
         {/* Profile Navigation Tabs */}
-        <div className="flex border-b border-[#2f3336] overflow-x-auto no-scrollbar">
-          {['posts', 'followers', 'following', 'replies', 'likes'].map((tab) => (
+        <div className="flex border-b border-[#2f3336] overflow-x-auto scrollbar-none">
+          {[
+            { id: 'posts', label: 'Posts' },
+            { id: 'media', label: 'Media' },
+            { id: 'followers', label: 'Followers' },
+            { id: 'following', label: 'Following' },
+            { id: 'replies', label: 'Replies' },
+            { id: 'likes', label: 'Likes' }
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => handleTabChange(tab)}
-              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm capitalize relative hover:bg-[#181818] transition-colors cursor-pointer shrink-0 px-3 ${
-                activeTab === tab ? 'text-white' : 'text-gray-500'
+              key={tab.id}
+              onClick={() => handleTabChange(tab.id)}
+              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm relative hover:bg-[#181818] transition-colors cursor-pointer shrink-0 px-4 min-w-[75px] ${
+                activeTab === tab.id ? 'text-white font-extrabold' : 'text-gray-500'
               }`}
             >
-              {tab}
-              {activeTab === tab && (
+              {tab.label}
+              {activeTab === tab.id && (
                 <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-12 h-1 bg-[#1d9bf0] rounded-full"></div>
               )}
             </button>

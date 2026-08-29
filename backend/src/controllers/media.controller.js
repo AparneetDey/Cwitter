@@ -89,13 +89,44 @@ const getUserMedia = asyncHandler(async (req, res) => {
             }
         },
         {
-            $project: {
-                _id: 0,
-                url: 1
+            $lookup: {
+                from: "tweets",
+                localField: "tweet",
+                foreignField: "_id",
+                as: "tweetDoc",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        username: 1,
+                                        fullName: 1,
+                                        avatar: 1,
+                                        isVerified: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: { $first: "$owner" },
+                            totalRetweets: { $size: { $ifNull: ["$retweets", []] } }
+                        }
+                    }
+                ]
             }
+        },
+        {
+            $sort: { createdAt: -1 }
         }
-    ]
-    
+    ];
+
     const paginateOptions = {
         page,
         limit,
@@ -103,9 +134,9 @@ const getUserMedia = asyncHandler(async (req, res) => {
             docs: "medias",
             totalDocs: "totalMedias"
         }
-    }
+    };
 
-    const media = await Media.aggregatePaginate(Media.aggregate(pipeline), paginateOptions);
+    const mediaResult = await Media.aggregatePaginate(Media.aggregate(pipeline), paginateOptions);
 
     res
     .status(200)
@@ -113,13 +144,18 @@ const getUserMedia = asyncHandler(async (req, res) => {
         new ApiResponse(
             200,
             {
-                ...media,
-                medias: media.medias.map(item => item.url)
+                ...mediaResult,
+                medias: mediaResult.medias.map(item => ({
+                    _id: item._id,
+                    url: item.url,
+                    tweetId: item.tweet,
+                    tweet: item.tweetDoc?.[0] || null
+                }))
             },
             "User media fetched successfully"
         )
-    )
-})
+    );
+});
 
 export {
     addAMedia,
