@@ -20,6 +20,7 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import useFormatter from '../../hooks/useFormatter';
+import usePostReach from '../../hooks/usePostReach';
 
 const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-96" }) => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -148,7 +149,10 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
   const ownerId = post?.owner?._id || post?.owner || post?.author?._id || post?.author?.id;
   const isOwner = currentUser?._id && String(currentUser._id) === String(ownerId);
 
-  // Robust calculation for initial and dynamic retweet & like counts
+  // Automatically trigger backend reach recording API silently when post appears on user's screen
+  const containerRef = usePostReach(postId);
+
+  // Robust calculation for initial and dynamic retweet, like, and reach counts
   const retweetCount =
     typeof post?.totalRetweets === 'number'
       ? post.totalRetweets
@@ -165,6 +169,15 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
       ? post.likes
       : Array.isArray(post?.likes)
       ? post.likes.length
+      : 0;
+
+  const reachCount =
+    typeof post?.totalReach === 'number'
+      ? post.totalReach
+      : typeof post?.views === 'number'
+      ? post.views
+      : typeof post?.reach === 'number'
+      ? post.reach
       : 0;
 
   // Close dropdown menu on click outside
@@ -228,6 +241,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
       />
 
       <article
+        ref={containerRef}
         onClick={() => navigate(`/post/${postId}`)}
         className="p-4 hover:bg-[#080808] transition-colors flex gap-3.5 cursor-pointer relative"
       >
@@ -375,7 +389,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
               <div className="p-2">
                 <BarChart2 className="w-4 h-4" />
               </div>
-              <span>{post?.views || '100'}</span>
+              <span>{formatNumber(reachCount)}</span>
             </div>
 
             {/* Bookmark & Share */}

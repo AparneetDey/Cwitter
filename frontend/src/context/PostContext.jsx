@@ -3,6 +3,7 @@ import api from '../utils/axiosApi.util';
 import { useAuth } from './AuthContext';
 import VerificationModal from '../components/profile/VerificationModal';
 import uploadToImageKit from '../utils/imageKit';
+import { useRef } from 'react';
 
 const PostContext = createContext(null);
 
@@ -369,6 +370,23 @@ export const PostProvider = ({ children }) => {
     }
   }, []);
 
+  // Session set of recorded reach tweet IDs to avoid duplicate API calls
+  const recordedReachSet = useRef(new Set());
+
+  // Record Reach Action (Fires backend reach endpoint silently without immediate UI mutation)
+  const recordReach = useCallback(async (postId) => {
+    if (!postId || recordedReachSet.current.has(String(postId))) return;
+
+    // Mark as recorded in current session
+    recordedReachSet.current.add(String(postId));
+
+    try {
+      await api.put(`/tweetReaches/${postId}`);
+    } catch (error) {
+      console.warn("Failed to record tweet reach:", error?.response?.data?.message || error?.message);
+    }
+  }, []);
+
   // Share Post Action
   const sharePost = useCallback((postId, showToast) => {
     const postUrl = `${window.location.origin}/post/${postId}`;
@@ -387,6 +405,7 @@ export const PostProvider = ({ children }) => {
     toggleLike,
     toggleRetweet,
     toggleBookmark,
+    recordReach,
     sharePost,
     isVerificationModalOpen,
     openVerificationModal,
