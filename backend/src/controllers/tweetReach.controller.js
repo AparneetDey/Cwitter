@@ -1,8 +1,8 @@
-import { asyncHandler } from "../utils/asyncHandler";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { Tweet } from "../models/tweet.model";
-import { TweetReach } from "../models/tweetReach.model";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { Tweet } from "../models/tweet.model.js";
+import { TweetReach } from "../models/tweetReach.model.js";
 
 const recordTweetReach = asyncHandler(async (req, res) => {
     const {tweetId} = req.params;
