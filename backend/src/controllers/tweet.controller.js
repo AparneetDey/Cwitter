@@ -150,6 +150,14 @@ const getATweet = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "tweetreaches",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "reachData"
+            }
+        },
+        {
             $addFields: {
                 likes: {
                     $map: {
@@ -188,6 +196,9 @@ const getATweet = asyncHandler(async (req, res) => {
                         req?.user?._id,
                         "$likes"
                     ]
+                },
+                totalReach: {
+                    $size: "$reachData"
                 }
             }
         },
@@ -195,7 +206,8 @@ const getATweet = asyncHandler(async (req, res) => {
             $project: {
                 retweets: 0,
                 tweetLikes: 0,
-                likes: 0
+                likes: 0,
+                reachData: 0
             }
         }
     ]);
@@ -333,6 +345,14 @@ const getUserTweets = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "tweetreaches",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "reachData"
+            }
+        },
+        {
             $addFields: {
                 likes: {
                     $map: {
@@ -371,6 +391,9 @@ const getUserTweets = asyncHandler(async (req, res) => {
                         req?.user?._id,
                         "$likes"
                     ]
+                },
+                totalReach: {
+                    $size: "$reachData"
                 }
             }
         },
@@ -383,7 +406,8 @@ const getUserTweets = asyncHandler(async (req, res) => {
             $project: {
                 retweets: 0,
                 tweetLikes: 0,
-                likes: 0
+                likes: 0,
+                reachData: 0
             }
         }
     ]
@@ -449,6 +473,14 @@ const getUserFeed = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "tweetreaches",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "reachData"
+            }
+        },
+        {
             $addFields: {
                 likes: {
                     $map: {
@@ -487,11 +519,15 @@ const getUserFeed = asyncHandler(async (req, res) => {
                         req?.user?._id,
                         "$likes"
                     ]
+                },
+                totalReach: {
+                    $size: "$reachData"
                 }
             }
         },
         {
             $sort: {
+                totalReach: -1,
                 createdAt: -1,
                 totalRetweets: -1,
                 totalLikes: -1
@@ -501,7 +537,8 @@ const getUserFeed = asyncHandler(async (req, res) => {
             $project: {
                 retweets: 0,
                 tweetLikes: 0,
-                likes: 0
+                likes: 0,
+                reachData: 0
             }
         }
     ]
@@ -590,6 +627,14 @@ const getUserFollowingFeed = asyncHandler(async (req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "tweetreaches",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "reachData"
+            }
+        },
+        {
             $addFields: {
                 likes: {
                     $map: {
@@ -628,11 +673,15 @@ const getUserFollowingFeed = asyncHandler(async (req, res) => {
                         req?.user?._id,
                         "$likes"
                     ]
+                },
+                totalReach: {
+                    $size: "$reachData"
                 }
             }
         },
         {
             $sort: {
+                totalReach: -1,
                 createdAt: -1,
                 totalRetweets: -1,
                 totalLikes: -1
@@ -642,7 +691,8 @@ const getUserFollowingFeed = asyncHandler(async (req, res) => {
             $project: {
                 retweets: 0,
                 tweetLikes: 0,
-                likes: 0
+                likes: 0,
+                reachData: 0
             }
         }
     ]

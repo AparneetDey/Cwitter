@@ -537,8 +537,38 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
             }
         },
         {
-            $sort: {
-                "bookmark.createdAt": sortType === "asc" ? 1 : -1
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "tweetLikes",
+                pipeline: [
+                    {
+                        $project: {
+                            _id: 0,
+                            likedBy: 1
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            $lookup: {
+                from: "tweetreaches",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "reachData"
+            }
+        },
+        {
+            $addFields: {
+                likes: {
+                    $map: {
+                        input: "$tweetLikes",
+                        as: "like",
+                        in: "$$like.likedBy"
+                    }
+                }
             }
         },
         {
@@ -560,7 +590,24 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
                         "$bookmark._id",
                         req?.user?.bookmarks
                     ]
+                },
+                totalLikes: {
+                    $size: "$likes"
+                },
+                isLiked: {
+                    $in: [
+                        req?.user?._id,
+                        "$likes"
+                    ]
+                },
+                totalReach: {
+                    $size: "$reachData"
                 }
+            }
+        },
+        {
+            $sort: {
+                "bookmark.createdAt": sortType === "asc" ? 1 : -1
             }
         },
         {
@@ -579,7 +626,10 @@ const getUserBookmarks = asyncHandler(async (req, res) => {
                 },
                 isRetweeted: 1,
                 totalRetweets: 1,
-                isBookmarked: 1
+                isBookmarked: 1,
+                totalLikes: 1,
+                isLiked: 1,
+                totalReach: 1
             }
         }
     ];
