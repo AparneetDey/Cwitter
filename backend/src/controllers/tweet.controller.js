@@ -527,9 +527,7 @@ const getUserFeed = asyncHandler(async (req, res) => {
         },
         {
             $sort: {
-                totalReach: -1,
                 createdAt: -1,
-                totalRetweets: -1,
                 totalLikes: -1
             }
         },
@@ -681,9 +679,7 @@ const getUserFollowingFeed = asyncHandler(async (req, res) => {
         },
         {
             $sort: {
-                totalReach: -1,
                 createdAt: -1,
-                totalRetweets: -1,
                 totalLikes: -1
             }
         },
