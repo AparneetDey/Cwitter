@@ -21,6 +21,7 @@ import { getAvatarUrl } from '../../utils/constants';
 import { usePost } from '../../context/PostContext';
 import { useAuth } from '../../context/AuthContext';
 import useFormatter from '../../hooks/useFormatter';
+import usePostReach from '../../hooks/usePostReach';
 import EditPostModal from './EditPostModal';
 
 const MediaImageWithSkeleton = ({ url, alt, maxH = "max-h-120" }) => {
@@ -189,6 +190,27 @@ const PostDetails = () => {
       ? post.likes.length
       : 0;
 
+  const reachCount =
+    typeof post?.totalReach === 'number'
+      ? post.totalReach
+      : typeof post?.views === 'number'
+      ? post.views
+      : typeof post?.reach === 'number'
+      ? post.reach
+      : 0;
+
+  const setPostSingle = useCallback((updater) => {
+    setPost((prev) => {
+      if (!prev) return prev;
+      if (typeof updater === 'function') {
+        const dummyArr = [prev];
+        const resArr = updater(dummyArr);
+        return resArr && resArr.length > 0 ? resArr[0] : prev;
+      }
+      return prev;
+    });
+  }, []);
+
   const handleProfileClick = (e) => {
     e.stopPropagation();
     if (ownerId) {
@@ -200,17 +222,8 @@ const PostDetails = () => {
     toggleLike(postId, setPostSingle, showToast);
   };
 
-  const setPostSingle = (updater) => {
-    setPost((prev) => {
-      if (!prev) return prev;
-      if (typeof updater === 'function') {
-        const dummyArr = [prev];
-        const resArr = updater(dummyArr);
-        return resArr && resArr.length > 0 ? resArr[0] : prev;
-      }
-      return prev;
-    });
-  };
+  // Automatically trigger backend reach recording API silently when post appears on user's screen
+  const containerRef = usePostReach(postId);
 
   const handleRetweetClick = () => {
     toggleRetweet(postId, setPostSingle, showToast);
@@ -270,7 +283,7 @@ const PostDetails = () => {
           </div>
         ) : (
           /* Single Post Detail View */
-          <article className="p-5 border-b border-[#2f3336] space-y-4">
+          <article ref={containerRef} className="p-5 border-b border-[#2f3336] space-y-4">
             
             {/* Author Meta Header */}
             <div className="flex items-center justify-between">
@@ -361,7 +374,7 @@ const PostDetails = () => {
             <div className="py-3 border-y border-[#2f3336] text-gray-500 text-sm flex items-center space-x-2">
               <span>{formatDate(post?.createdAt)}</span>
               <span>·</span>
-              <span className="text-white font-semibold">{post?.views || '100'}</span>
+              <span className="text-white font-semibold">{formatNumber(reachCount)}</span>
               <span>Views</span>
             </div>
 
