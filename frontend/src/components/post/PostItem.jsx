@@ -341,10 +341,6 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
           {/* Post Media Attachments (Scrollable Carousel with full width & arrows) */}
           {Array.isArray(post?.media) && post.media.length > 0 ? (
             <MediaCarousel media={post.media} maxH="max-h-96" />
-          ) : post?.image ? (
-            <div className="mt-2 rounded-2xl overflow-hidden border border-[#2f3336] max-h-96">
-              <img src={post?.image} alt="post media" className="w-full h-full object-cover" />
-            </div>
           ) : null}
 
           {/* Action Buttons Row */}

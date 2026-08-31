@@ -291,7 +291,7 @@ const Profile = () => {
     );
 
     try {
-      const res = await api.get(`/follows/${targetUserId}`);
+      const res = await api.put(`/follows/${targetUserId}`);
       const message = res?.data?.message || (nextIsFollowing ? `You followed @${user.username}` : `Unfollowed @${user.username}`);
       triggerToast(message);
     } catch (error) {
@@ -336,7 +336,7 @@ const Profile = () => {
 
     // 2. Async backend API call
     try {
-      const res = await api.get(`/follows/${targetUserId}`);
+      const res = await api.put(`/follows/${targetUserId}`);
       const message = res?.data?.message || 'Updated follow status';
       triggerToast(message);
     } catch (error) {

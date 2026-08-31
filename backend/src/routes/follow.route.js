@@ -6,7 +6,7 @@ const router = Router()
 
 router.use(verifyToken);
 
-router.route("/:followingId").get(toggleFollow);
+router.route("/:followingId").put(toggleFollow);
 router.route("/followers/:userId").get(getUserFollowers);
 router.route("/followings/:userId").get(getUserFollowings);
 
