@@ -348,7 +348,7 @@ const PostItem = ({ post, setPosts, onBookmarkToggle }) => {
           ) : null}
 
           {/* Action Buttons Row */}
-          <div className="flex items-center justify-between text-gray-500 max-w-md pt-2 text-xs">
+          <div className="flex items-center justify-between text-gray-500 w-full max-w-lg pt-2 text-xs">
             
             {/* Reply */}
             <button className="flex items-center space-x-2 hover:text-[#1d9bf0] group transition-colors cursor-pointer">
