@@ -5,10 +5,9 @@ import { addAMedia, deleteAMedia, getUserMedia } from "../controllers/media.cont
 const router = Router();
 
 router.use(verifyToken);
-router.use(verifyUser);
 
-router.route("/add/:tweetId").post(addAMedia);
-router.route("/delete/media/:mediaId").delete(deleteAMedia);
+router.route("/add/:tweetId").post(verifyUser, addAMedia);
+router.route("/delete/media/:mediaId").delete(verifyUser, deleteAMedia);
 router.route("/user/:userId").get(getUserMedia)
 
 export default router;
