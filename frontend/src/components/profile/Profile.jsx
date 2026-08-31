@@ -34,7 +34,7 @@ const Profile = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
-  
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -58,6 +58,11 @@ const Profile = () => {
   const [followingPage, setFollowingPage] = useState(1);
   const [followingHasNext, setFollowingHasNext] = useState(false);
   const [loadingMoreFollowing, setLoadingMoreFollowing] = useState(false);
+
+  const [likedTweets, setLikedTweets] = useState(null);
+  const [likedTweetsPage, setLikedTweetsPage] = useState(1);
+  const [likedTweetsHasNext, setLikedTweetsHasNext] = useState(false);
+  const [loadingMoreLikedTweets, setLoadingMoreLikedTweets] = useState(false);
 
   const isOwnProfile = currentUser?._id && (String(currentUser._id) === String(user?._id) || String(currentUser._id) === String(userId));
 
@@ -205,12 +210,44 @@ const Profile = () => {
     }
   }, [userId, showToast]);
 
+  // Fetch User Liked Tweets from /likes/user/:userId
+  const getUserLikedTweetsList = useCallback(async (pageToFetch = 1) => {
+    if (pageToFetch === 1) {
+      setTabLoading(true);
+    } else {
+      setLoadingMoreLikedTweets(true);
+    }
+
+    try {
+      const res = await api.get(`likes/user/${userId}?page=${pageToFetch}&limit=15`);
+      const data = res.data?.data;
+      const docs = data?.likedTweets || [];
+      const hasNext = Boolean(data?.hasNextPage);
+
+      if (pageToFetch === 1) {
+        setLikedTweets(docs);
+      } else {
+        setLikedTweets((prev) => [...(prev || []), ...docs]);
+      }
+
+      setLikedTweetsHasNext(hasNext);
+      setLikedTweetsPage(pageToFetch);
+    } catch (error) {
+      if (showToast) showToast(error?.response?.data?.message || "Failed to fetch liked tweets");
+      if (pageToFetch === 1) setLikedTweets([]);
+    } finally {
+      setTabLoading(false);
+      setLoadingMoreLikedTweets(false);
+    }
+  }, [userId, showToast]);
+
   // Load dashboard overview when userId changes & reset tab caches
   useEffect(() => {
     setPosts(null);
     setMediaList(null);
     setFollowersList(null);
     setFollowingList(null);
+    setLikedTweets(null);
     setActiveTab('posts');
     getUserDashboard();
   }, [userId, getUserDashboard]);
@@ -225,8 +262,10 @@ const Profile = () => {
       getUserFollowers(1);
     } else if (activeTab === 'following' && followingList === null) {
       getUserFollowings(1);
+    } else if (activeTab === 'likes' && likedTweets === null) {
+      getUserLikedTweetsList(1);
     }
-  }, [activeTab, posts, mediaList, followersList, followingList, getUserTweets, getUserMediaList, getUserFollowers, getUserFollowings]);
+  }, [activeTab, posts, mediaList, followersList, followingList, likedTweets, getUserTweets, getUserMediaList, getUserFollowers, getUserFollowings, getUserLikedTweetsList]);
 
   const handleTabChange = (tabName) => {
     setActiveTab(tabName);
@@ -366,6 +405,17 @@ const Profile = () => {
             onLoadMore={() => getUserTweets(postsPage + 1)}
           />
         );
+      case 'likes':
+        return (
+          <PostList
+            posts={likedTweets}
+            setPosts={setLikedTweets}
+            loadingMore={loadingMoreLikedTweets}
+            hasNextPage={likedTweetsHasNext}
+            onLoadMore={() => getUserLikedTweetsList(likedTweetsPage + 1)}
+            emptyMessage={`@${user?.username || 'user'} hasn't liked any posts yet.`}
+          />
+        );
       case 'media':
         if (!mediaList || mediaList.length === 0) {
           return (
@@ -426,7 +476,7 @@ const Profile = () => {
   }
 
   return (
-    <>
+    <div className="w-full max-w-150 border-r border-[#2f3336] min-h-screen flex flex-col">
       {/* Change Password Modal */}
       <ChangePasswordModal
         isOpen={isPasswordModalOpen}
@@ -458,123 +508,123 @@ const Profile = () => {
         }}
       />
 
-      {/* Center Profile View */}
-      <main className="w-full max-w-150 border-r border-[#2f3336] bg-black min-h-screen pb-16">
-        
-        {/* Header */}
-        <header className="sticky top-0 bg-black/80 backdrop-blur-md z-30 border-b border-[#2f3336] flex items-center space-x-6 px-4 py-2">
-          <button
-            onClick={() => navigate('/')}
-            className="p-2 rounded-full hover:bg-[#181818] text-white transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center space-x-1.5">
-              <span>{user?.fullName}</span>
-              {user?.isVerified && (
-                <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] shrink-0" title="Verified Account" />
-              )}
-            </h2>
-            <p className="text-gray-500 text-xs">{posts?.length || 0} Posts</p>
+      {/* Sticky Header with Back Button & Post Count */}
+      <header className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-[#2f3336] px-4 py-2 flex items-center space-x-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="p-2 rounded-full hover:bg-[#181818] transition-colors cursor-pointer text-white"
+          title="Back"
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </button>
+        <div className="flex flex-col">
+          <div className="flex items-center space-x-1.5">
+            <h1 className="font-bold text-lg text-white leading-snug">{user?.fullName}</h1>
+            {user?.isVerified && (
+              <CheckCircle2 className="w-4 h-4 text-[#1d9bf0] shrink-0" />
+            )}
           </div>
-        </header>
+          <span className="text-xs text-gray-500 font-medium">
+            {formatNumber(user?.totalTweets || 0)} posts
+          </span>
+        </div>
+      </header>
 
-        {/* Cover Image Banner */}
-        <div className="h-48 sm:h-56 bg-[#16181c] relative overflow-hidden">
+      <main className="w-full pb-20">
+        {/* Cover Photo / Banner */}
+        <div className="h-36 sm:h-48 bg-[#202327] relative w-full overflow-hidden">
           {user?.coverImage ? (
-            <img
-              src={user.coverImage}
-              alt="cover"
-              className="w-full h-full object-cover"
-            />
+            <img src={user.coverImage} alt="cover banner" className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-linear-to-r from-[#1d9bf0]/40 via-[#7928ca]/30 to-[#00d2ff]/40"></div>
+            <div className="w-full h-full bg-gradient-to-r from-[#15202b] via-[#1d9bf0]/20 to-[#15202b]" />
           )}
         </div>
 
-        {/* Avatar & Action Buttons Bar */}
-        <div className="px-4 pb-4 flex justify-between items-end relative">
-          {/* Avatar */}
-          <div className="-mt-16 sm:-mt-20 relative">
-            <img
-              src={getAvatarUrl(user?.avatar)}
-              alt="avatar"
-              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-black bg-[#16181c]"
-            />
-          </div>
+        {/* Profile Info Header Bar */}
+        <div className="px-4 pb-4 border-b border-[#2f3336] relative space-y-3">
+          {/* Avatar & Action Buttons Row */}
+          <div className="flex items-end justify-between -mt-16 sm:-mt-20 mb-3">
+            <div className="relative">
+              <img
+                src={getAvatarUrl(user?.avatar)}
+                alt={user?.fullName}
+                className="w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-black object-cover bg-[#16181c]"
+              />
+            </div>
 
-          {/* Profile Action Buttons */}
-          <div className="flex items-center space-x-2">
-            {isOwnProfile ? (
-              <>
-                {!user?.isVerified && (
+            {/* Profile Action Buttons */}
+            <div className="flex items-center space-x-2">
+              {isOwnProfile ? (
+                <>
+                  {!user?.isVerified && (
+                    <button
+                      onClick={() => setIsVerificationModalOpen(true)}
+                      className="px-3.5 py-1.5 rounded-full border border-[#1d9bf0]/50 text-[#1d9bf0] hover:bg-[#1d9bf0]/10 font-bold text-xs transition-colors flex items-center space-x-1.5 cursor-pointer shadow-xs"
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" />
+                      <span>Get Verified</span>
+                    </button>
+                  )}
                   <button
-                    onClick={() => setIsVerificationModalOpen(true)}
-                    className="bg-[#1d9bf0]/10 hover:bg-[#1d9bf0]/20 border border-[#1d9bf0]/40 text-[#1d9bf0] font-bold px-4 py-2 rounded-full transition-all text-sm cursor-pointer flex items-center space-x-1.5"
-                    title="Verify your Cwitter account"
+                    onClick={() => setIsEditModalOpen(true)}
+                    className="px-4 py-1.5 rounded-full border border-[#536471] text-white font-bold text-xs sm:text-sm hover:bg-[#181818] transition-colors flex items-center space-x-1.5 cursor-pointer"
                   >
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Get Verified</span>
+                    <Edit3 className="w-4 h-4" />
+                    <span>Edit profile</span>
                   </button>
-                )}
+                </>
+              ) : (
                 <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="cwitter-btn-outline"
+                  onClick={handleToggleProfileFollow}
+                  className={`px-5 py-1.5 rounded-full font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-md ${
+                    user?.isFollowing
+                      ? 'border border-[#536471] text-white hover:bg-red-600/10 hover:border-red-600 hover:text-red-500'
+                      : 'bg-white text-black hover:bg-gray-200'
+                  }`}
                 >
-                  <Edit3 className="w-4 h-4" />
-                  <span>Edit profile</span>
+                  {user?.isFollowing ? 'Following' : 'Follow'}
                 </button>
-              </>
-            ) : (
-              <button
-                onClick={handleToggleProfileFollow}
-                className={`px-5 py-2 rounded-full font-bold text-sm transition-all cursor-pointer ${
-                  user?.isFollowing
-                    ? 'bg-transparent border border-[#2f3336] text-white hover:border-red-600 hover:text-red-500'
-                    : 'cwitter-btn-secondary px-5! py-2! text-sm!'
-                }`}
-              >
-                {user?.isFollowing ? 'Following' : 'Follow'}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* User Information Details */}
-        <div className="px-4 space-y-3.5 border-b border-[#2f3336] pb-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-white flex items-center space-x-1.5">
-              <span>{user?.fullName}</span>
-              {user?.isVerified && (
-                <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] shrink-0" title="Verified Account" />
               )}
-            </h1>
+            </div>
+          </div>
+
+          {/* User Details */}
+          <div>
+            <div className="flex items-center space-x-1.5">
+              <h2 className="text-xl font-extrabold text-white leading-tight">{user?.fullName}</h2>
+              {user?.isVerified && (
+                <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] shrink-0" />
+              )}
+            </div>
             <p className="text-gray-500 text-sm">@{user?.username}</p>
           </div>
 
-          {/* Bio / Description */}
-          <p className="text-[#e7e9ea] text-sm leading-relaxed">
-            {user?.description || 'No description provided.'}
-          </p>
+          {/* Bio */}
+          {user?.bio && (
+            <p className="text-[#e7e9ea] text-sm leading-normal whitespace-pre-line pt-1">
+              {user.bio}
+            </p>
+          )}
 
-          {/* Metadata (Location, GitHub & Joined Date) */}
-          <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500 pt-1">
-            <div className="flex items-center space-x-1">
-              <MapPin className="w-4 h-4 text-gray-500" />
-              <span>{user?.location || 'Earth'}</span>
-            </div>
-
-            {user?.githubLink && (
+          {/* Metadata Row (Location, Website, Github, Joined Date) */}
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs sm:text-sm text-gray-500 pt-1">
+            {user?.location && (
               <div className="flex items-center space-x-1">
-                <GithubIcon className="w-4 h-4 text-gray-500" />
+                <MapPin className="w-4 h-4 text-gray-500" />
+                <span>{user.location}</span>
+              </div>
+            )}
+
+            {user?.website && (
+              <div className="flex items-center space-x-1">
+                <GithubIcon className="w-4 h-4 text-gray-500 shrink-0" />
                 <a
-                  href={user.githubLink.startsWith('http') ? user.githubLink : `https://${user.githubLink}`}
+                  href={user.website.startsWith('http') ? user.website : `https://${user.website}`}
                   target="_blank"
                   rel="noreferrer"
                   className="text-[#1d9bf0] hover:underline"
                 >
-                  {user.githubLink.replace(/^https?:\/\//, '').replace("github.com/", "")}
+                  {user.website.replace(/^https?:\/\//, '')}
                 </a>
               </div>
             )}
@@ -620,7 +670,7 @@ const Profile = () => {
             <button
               key={tab.id}
               onClick={() => handleTabChange(tab.id)}
-              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm relative hover:bg-[#181818] transition-colors cursor-pointer shrink-0 px-4 min-w-18.75 ${
+              className={`flex-1 text-center py-3.5 font-bold text-xs sm:text-sm relative hover:bg-[#181818] transition-colors cursor-pointer shrink-0 px-3 min-w-[75px] ${
                 activeTab === tab.id ? 'text-white font-extrabold' : 'text-gray-500'
               }`}
             >
@@ -636,7 +686,7 @@ const Profile = () => {
         {renderTabContent()}
 
       </main>
-    </>
+    </div>
   );
 };
 
