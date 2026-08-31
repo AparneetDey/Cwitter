@@ -54,7 +54,9 @@ const getUserLikedTweets = asyncHandler(async (req, res) => {
 
     if (!existingUser) throw new ApiError(404, "User does not exist");
 
-    const likedTweets = await Like.aggregate([
+    const {page = 1, limit = 15} = req.query;
+
+    const pipeline = [
         {
             $match: {
                 likedBy: new mongoose.Types.ObjectId(userId),
@@ -192,7 +194,18 @@ const getUserLikedTweets = asyncHandler(async (req, res) => {
                 newRoot: "$likedTweets"
             }
         }
-    ])
+    ];
+
+    const paginateOptions = {
+        page,
+        limit,
+        customLabels: {
+            docs: "likedTweets",
+            totalDocs: "totalLikedTweets"
+        }
+    }
+
+    const likedTweets = await Like.aggregatePaginate(Like.aggregate(pipeline), paginateOptions);
 
     res
     .status(200)
